@@ -15,14 +15,9 @@ SciMLBase = "0bca4576-84f4-4d90-8ffe-ffa030f20462"
 SnoopPrecompile = "66db9d55-30c0-4569-8b51-7e840670fc0c"
 StaticArraysCore = "1e83bf80-4336-4d27-bf5d-d5a4f845583c"
 
-[weakdeps]
-NNlib = "872c559c-99b0-510c-b3b7-b6c96a88d5cd"
-
-[extensions]
-SimpleBatchedNonlinearSolveExt = "NNlib"
-
 [compat]
 ArrayInterface = "6, 7"
+DiffEqBase = "6"
 FiniteDiff = "2"
 ForwardDiff = "0.10.3"
 NNlib = "0.8"
@@ -32,6 +27,9 @@ SciMLBase = "1.73"
 SnoopPrecompile = "1"
 StaticArraysCore = "1.4"
 julia = "1.6"
+
+[extensions]
+SimpleBatchedNonlinearSolveExt = "NNlib"
 
 [extras]
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
@@ -43,3 +41,6 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
 test = ["BenchmarkTools", "SafeTestsets", "Pkg", "Test", "StaticArrays", "NNlib"]
+
+[weakdeps]
+NNlib = "872c559c-99b0-510c-b3b7-b6c96a88d5cd"
