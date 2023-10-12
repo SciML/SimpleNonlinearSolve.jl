@@ -16,7 +16,7 @@ function __init__()
     @require_extensions
 end
 
-const NNlibExtLoaded = Ref{Bool}(false)
+extension_loaded(::Val) = false
 
 abstract type AbstractSimpleNonlinearSolveAlgorithm <: SciMLBase.AbstractNonlinearAlgorithm end
 abstract type AbstractBracketingAlgorithm <: AbstractSimpleNonlinearSolveAlgorithm end
