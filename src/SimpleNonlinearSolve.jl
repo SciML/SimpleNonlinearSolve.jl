@@ -2,9 +2,10 @@ module SimpleNonlinearSolve
 
 using Reexport
 using FiniteDiff, ForwardDiff
-using ForwardDiff: Dual
+using ForwardDiff: Dual, Partials, Tag
 using StaticArraysCore
 using LinearAlgebra
+using LinearSolve
 import ArrayInterface
 using DiffEqBase
 
@@ -15,7 +16,7 @@ function __init__()
     @require_extensions
 end
 
-const NNlibExtLoaded = Ref{Bool}(false)
+extension_loaded(::Val) = false
 
 abstract type AbstractSimpleNonlinearSolveAlgorithm <: SciMLBase.AbstractNonlinearAlgorithm end
 abstract type AbstractBracketingAlgorithm <: AbstractSimpleNonlinearSolveAlgorithm end
@@ -39,6 +40,7 @@ include("ad.jl")
 include("halley.jl")
 include("alefeld.jl")
 include("itp.jl")
+include("jnfk.jl")
 
 # Batched Solver Support
 include("batched/utils.jl")
@@ -90,7 +92,7 @@ end
 
 # DiffEq styled algorithms
 export Bisection, Brent, Broyden, LBroyden, SimpleDFSane, Falsi, Halley, Klement,
-    Ridder, SimpleNewtonRaphson, SimpleTrustRegion, Alefeld, ITP
+    Ridder, SimpleNewtonRaphson, SimpleTrustRegion, Alefeld, ITP, SimpleJFNK
 export BatchedBroyden, BatchedSimpleNewtonRaphson, BatchedSimpleDFSane
 
 end # module

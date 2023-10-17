@@ -4,10 +4,7 @@ using ArrayInterface, DiffEqBase, LinearAlgebra, NNlib, SimpleNonlinearSolve, Sc
 import SimpleNonlinearSolve: _construct_batched_problem_structure,
     _get_storage, _init_𝓙, _result_from_storage, _get_tolerance, @maybeinplace
 
-function __init__()
-    SimpleNonlinearSolve.NNlibExtLoaded[] = true
-    return
-end
+SimpleNonlinearSolve.extension_loaded(::Val{NNlib}) = true
 
 @views function SciMLBase.__solve(prob::NonlinearProblem,
     alg::BatchedBroyden;

@@ -22,7 +22,7 @@ function Broyden(; batched = false,
         abstol = nothing,
         reltol = nothing))
     if batched
-        @assert NNlibExtLoaded[] "Please install and load `NNlib.jl` to use batched Broyden."
+        @assert extension_loaded(Val(:NNlib)) "Please install and load `NNlib.jl` to use batched Broyden."
         return BatchedBroyden(termination_condition)
     end
     return Broyden(termination_condition)

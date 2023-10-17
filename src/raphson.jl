@@ -42,7 +42,6 @@ function SimpleNewtonRaphson(; batched = false,
         throw(ArgumentError("`termination_condition` is currently only supported for batched problems"))
     end
     if batched
-        # @assert ADLinearSolveFDExtLoaded[] "Please install and load `LinearSolve.jl`, `FiniteDifferences.jl` and `AbstractDifferentiation.jl` to use batched Newton-Raphson."
         termination_condition = ismissing(termination_condition) ?
                                 NLSolveTerminationCondition(NLSolveTerminationMode.NLSolveDefault;
             abstol = nothing,
