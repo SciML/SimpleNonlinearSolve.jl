@@ -34,10 +34,10 @@ and static array problems.
 struct SimpleNewtonRaphson{CS, AD, FDT} <: AbstractNewtonAlgorithm{CS, AD, FDT} end
 
 function SimpleNewtonRaphson(; batched = false,
-    chunk_size = Val{0}(),
-    autodiff = Val{true}(),
-    diff_type = Val{:forward},
-    termination_condition = missing)
+        chunk_size = Val{0}(),
+        autodiff = Val{true}(),
+        diff_type = Val{:forward},
+        termination_condition = missing)
     if !ismissing(termination_condition) && !batched
         throw(ArgumentError("`termination_condition` is currently only supported for batched problems"))
     end
@@ -62,9 +62,9 @@ function SimpleNewtonRaphson(; batched = false,
 end
 
 function SciMLBase.__solve(prob::NonlinearProblem,
-    alg::SimpleNewtonRaphson, args...; abstol = nothing,
-    reltol = nothing,
-    maxiters = 1000, kwargs...)
+        alg::SimpleNewtonRaphson, args...; abstol = nothing,
+        reltol = nothing,
+        maxiters = 1000, kwargs...)
     f = Base.Fix2(prob.f, prob.p)
     x = float(prob.u0)
     fx = float(prob.u0)
