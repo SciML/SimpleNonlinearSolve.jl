@@ -19,6 +19,7 @@ StaticArraysCore = "1e83bf80-4336-4d27-bf5d-d5a4f845583c"
 
 [compat]
 ArrayInterface = "7"
+ConcreteStructs = "0.2"
 DiffEqBase = "6.126"
 FiniteDiff = "2"
 ForwardDiff = "0.10.3"
