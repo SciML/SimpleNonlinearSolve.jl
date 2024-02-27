@@ -1,4 +1,4 @@
-module SimpleNonlinearSolveChainRulesCoreExt
+module SimpleNonlinearSolveChainRulesCoreDiffEqBaseExt
 
 using ChainRulesCore, DiffEqBase, SciMLBase, SimpleNonlinearSolve
 

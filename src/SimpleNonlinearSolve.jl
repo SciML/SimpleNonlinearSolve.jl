@@ -3,22 +3,23 @@ module SimpleNonlinearSolve
 import PrecompileTools: @compile_workload, @setup_workload, @recompile_invalidations
 
 @recompile_invalidations begin
-    using ADTypes, ArrayInterface, ConcreteStructs, DiffEqBase, FastClosures, FiniteDiff,
-          ForwardDiff, Reexport, LinearAlgebra, SciMLBase
+    using ADTypes, ArrayInterface, FiniteDiff, ForwardDiff, NonlinearSolveBase, Reexport,
+          LinearAlgebra, SciMLBase
 
-    import DiffEqBase: AbstractNonlinearTerminationMode,
-                       AbstractSafeNonlinearTerminationMode,
-                       AbstractSafeBestNonlinearTerminationMode,
-                       NonlinearSafeTerminationReturnCode, get_termination_mode,
-                       NONLINEARSOLVE_DEFAULT_NORM
+    import ConcreteStructs: @concrete
     import DiffResults
+    import FastClosures: @closure
     import ForwardDiff: Dual
     import MaybeInplace: @bb, setindex_trait, CanSetindex, CannotSetindex
+    import NonlinearSolveBase: AbstractNonlinearTerminationMode,
+                               AbstractSafeNonlinearTerminationMode,
+                               AbstractSafeBestNonlinearTerminationMode,
+                               get_termination_mode, NONLINEARSOLVE_DEFAULT_NORM
     import SciMLBase: AbstractNonlinearAlgorithm, build_solution, isinplace, _unwrap_val
     import StaticArraysCore: StaticArray, SVector, SMatrix, SArray, MArray, MMatrix, Size
 end
 
-@reexport using ADTypes, SciMLBase
+@reexport using ADTypes, SciMLBase  # TODO: Reexport NonlinearSolveBase after the situation with NonlinearSolve.jl is resolved
 
 abstract type AbstractSimpleNonlinearSolveAlgorithm <: AbstractNonlinearAlgorithm end
 abstract type AbstractBracketingAlgorithm <: AbstractSimpleNonlinearSolveAlgorithm end
@@ -58,23 +59,28 @@ function SciMLBase.solve(prob::IntervalNonlinearProblem, alg::Nothing, args...; 
 end
 
 # By Pass the highlevel checks for NonlinearProblem for Simple Algorithms
-function SciMLBase.solve(
-        prob::NonlinearProblem, alg::AbstractSimpleNonlinearSolveAlgorithm,
-        args...; sensealg = nothing, u0 = nothing, p = nothing, kwargs...)
-    if sensealg === nothing && haskey(prob.kwargs, :sensealg)
-        sensealg = prob.kwargs[:sensealg]
-    end
-    new_u0 = u0 !== nothing ? u0 : prob.u0
-    new_p = p !== nothing ? p : prob.p
-    return __internal_solve_up(
-        prob, sensealg, new_u0, u0 === nothing, new_p, p === nothing,
-        alg, args...; prob.kwargs..., kwargs...)
-end
+# Using eval to prevent ambiguity
+for pType in (NonlinearProblem, NonlinearLeastSquaresProblem)
+    @eval begin
+        function SciMLBase.solve(
+                prob::$(pType), alg::AbstractSimpleNonlinearSolveAlgorithm, args...;
+                sensealg = nothing, u0 = nothing, p = nothing, kwargs...)
+            if sensealg === nothing && haskey(prob.kwargs, :sensealg)
+                sensealg = prob.kwargs[:sensealg]
+            end
+            new_u0 = u0 !== nothing ? u0 : prob.u0
+            new_p = p !== nothing ? p : prob.p
+            return __internal_solve_up(
+                prob, sensealg, new_u0, u0 === nothing, new_p, p === nothing,
+                alg, args...; prob.kwargs..., kwargs...)
+        end
 
-function __internal_solve_up(_prob::NonlinearProblem, sensealg, u0, u0_changed,
-        p, p_changed, alg, args...; kwargs...)
-    prob = u0_changed || p_changed ? remake(_prob; u0, p) : _prob
-    return SciMLBase.__solve(prob, alg, args...; kwargs...)
+        function __internal_solve_up(_prob::$(pType), sensealg, u0, u0_changed, p,
+                p_changed, alg::AbstractSimpleNonlinearSolveAlgorithm, args...; kwargs...)
+            prob = u0_changed || p_changed ? remake(_prob; u0, p) : _prob
+            return SciMLBase.__solve(prob, alg, args...; kwargs...)
+        end
+    end
 end
 
 @setup_workload begin

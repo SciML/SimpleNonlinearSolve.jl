@@ -1,7 +1,8 @@
 @testsetup module RootfindingTesting
 using Reexport
 @reexport using AllocCheck,
-                LinearSolve, StaticArrays, Random, LinearAlgebra, ForwardDiff, DiffEqBase
+                LinearSolve, StaticArrays, Random, LinearAlgebra, ForwardDiff,
+                NonlinearSolveBase
 import PolyesterForwardDiff
 
 quadratic_f(u, p) = u .* u .- p
@@ -89,7 +90,7 @@ end
     end
 end
 
-@testitem "Derivative Free Metods" setup=[RootfindingTesting] begin
+@testitem "Derivative Free Methods" setup=[RootfindingTesting] begin
     @testset "$(nameof(typeof(alg)))" for alg in [SimpleBroyden(), SimpleKlement(),
         SimpleDFSane(), SimpleLimitedMemoryBroyden(),
         SimpleBroyden(; linesearch = Val(true)),
