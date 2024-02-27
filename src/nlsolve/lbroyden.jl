@@ -121,7 +121,7 @@ function __static_solve(prob::NonlinearProblem{<:SArray}, alg::SimpleLimitedMemo
 
     U, Vᵀ = __init_low_rank_jacobian(vec(x), vec(fx), threshold)
 
-    abstol = __get_tolerance(x, abstol, eltype(x))
+    abstol = NonlinearSolveBase.get_tolerance(x, abstol, eltype(x))
 
     xo, δx, fo, δf = x, -fx, fx, fx
 

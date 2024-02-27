@@ -58,7 +58,7 @@ function SciMLBase.solve(prob::IntervalNonlinearProblem, alg::ITP, args...;
     left, right = prob.tspan
     fl, fr = f(left), f(right)
 
-    abstol = __get_tolerance(nothing, abstol,
+    abstol = NonlinearSolveBase.get_tolerance(nothing, abstol,
         promote_type(eltype(first(prob.tspan)), eltype(last(prob.tspan))))
 
     if iszero(fl)

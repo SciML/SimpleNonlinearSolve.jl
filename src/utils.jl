@@ -77,7 +77,7 @@ except `cache` (& `J` if not nothing) are mutated.
 function value_and_jacobian(ad, f::F, y, x::X, p, cache; J = nothing) where {F, X}
     if isinplace(f)
         _f = (du, u) -> f(du, u, p)
-        if DiffEqBase.has_jac(f)
+        if SciMLBase.has_jac(f)
             f.jac(J, x, p)
             _f(y, x)
             return y, J
@@ -97,7 +97,7 @@ function value_and_jacobian(ad, f::F, y, x::X, p, cache; J = nothing) where {F, 
         end
     else
         _f = Base.Fix2(f, p)
-        if DiffEqBase.has_jac(f)
+        if SciMLBase.has_jac(f)
             return _f(x), f.jac(x, p)
         elseif ad isa AutoForwardDiff
             if ArrayInterface.can_setindex(x)
@@ -124,7 +124,7 @@ end
 function __polyester_forwarddiff_jacobian! end
 
 function value_and_jacobian(ad, f::F, y, x::Number, p, cache; J = nothing) where {F}
-    if DiffEqBase.has_jac(f)
+    if SciMLBase.has_jac(f)
         return f(x, p), f.jac(x, p)
     elseif ad isa AutoForwardDiff
         T = typeof(__standard_tag(ad.tag, x))
@@ -152,7 +152,7 @@ function jacobian_cache(ad, f::F, y, x::X, p) where {F, X <: AbstractArray}
     if isinplace(f)
         _f = (du, u) -> f(du, u, p)
         J = similar(y, length(y), length(x))
-        if DiffEqBase.has_jac(f)
+        if SciMLBase.has_jac(f)
             return J, nothing
         elseif ad isa AutoForwardDiff || ad isa AutoPolyesterForwardDiff
             return J, __get_jacobian_config(ad, _f, y, x)
@@ -163,7 +163,7 @@ function jacobian_cache(ad, f::F, y, x::X, p) where {F, X <: AbstractArray}
         end
     else
         _f = Base.Fix2(f, p)
-        if DiffEqBase.has_jac(f)
+        if SciMLBase.has_jac(f)
             return nothing, nothing
         elseif ad isa AutoForwardDiff
             J = ArrayInterface.can_setindex(x) ? similar(y, length(y), length(x)) : nothing
@@ -292,58 +292,27 @@ function init_termination_cache(abstol, reltol, du, u, ::Nothing)
     return init_termination_cache(abstol, reltol, du, u, AbsNormTerminationMode())
 end
 function init_termination_cache(abstol, reltol, du, u, tc::AbstractNonlinearTerminationMode)
-    T = promote_type(eltype(du), eltype(u))
-    abstol = __get_tolerance(u, abstol, T)
-    reltol = __get_tolerance(u, reltol, T)
     tc_cache = init(du, u, tc; abstol, reltol)
-    return DiffEqBase.get_abstol(tc_cache), DiffEqBase.get_reltol(tc_cache), tc_cache
+    return (NonlinearSolveBase.get_abstol(tc_cache),
+        NonlinearSolveBase.get_reltol(tc_cache), tc_cache)
 end
 
 function check_termination(tc_cache, fx, x, xo, prob, alg)
     return check_termination(tc_cache, fx, x, xo, prob, alg,
-        DiffEqBase.get_termination_mode(tc_cache))
+        NonlinearSolveBase.get_termination_mode(tc_cache))
 end
+
 function check_termination(tc_cache, fx, x, xo, prob, alg,
-        ::AbstractNonlinearTerminationMode)
+        mode::AbstractNonlinearTerminationMode)
     if Bool(tc_cache(fx, x, xo))
-        return build_solution(prob, alg, x, fx; retcode = ReturnCode.Success)
-    end
-    return nothing
-end
-function check_termination(tc_cache, fx, x, xo, prob, alg,
-        ::AbstractSafeNonlinearTerminationMode)
-    if Bool(tc_cache(fx, x, xo))
-        if tc_cache.retcode == NonlinearSafeTerminationReturnCode.Success
-            retcode = ReturnCode.Success
-        elseif tc_cache.retcode == NonlinearSafeTerminationReturnCode.PatienceTermination
-            retcode = ReturnCode.ConvergenceFailure
-        elseif tc_cache.retcode == NonlinearSafeTerminationReturnCode.ProtectiveTermination
-            retcode = ReturnCode.Unstable
-        else
-            error("Unknown termination code: $(tc_cache.retcode)")
+        if mode isa AbstractSafeBestNonlinearTerminationMode
+            if isinplace(prob)
+                prob.f(fx, x, prob.p)
+            else
+                fx = prob.f(x, prob.p)
+            end
         end
-        return build_solution(prob, alg, x, fx; retcode)
-    end
-    return nothing
-end
-function check_termination(tc_cache, fx, x, xo, prob, alg,
-        ::AbstractSafeBestNonlinearTerminationMode)
-    if Bool(tc_cache(fx, x, xo))
-        if tc_cache.retcode == NonlinearSafeTerminationReturnCode.Success
-            retcode = ReturnCode.Success
-        elseif tc_cache.retcode == NonlinearSafeTerminationReturnCode.PatienceTermination
-            retcode = ReturnCode.ConvergenceFailure
-        elseif tc_cache.retcode == NonlinearSafeTerminationReturnCode.ProtectiveTermination
-            retcode = ReturnCode.Unstable
-        else
-            error("Unknown termination code: $(tc_cache.retcode)")
-        end
-        if isinplace(prob)
-            prob.f(fx, x, prob.p)
-        else
-            fx = prob.f(x, prob.p)
-        end
-        return build_solution(prob, alg, tc_cache.u, fx; retcode)
+        return build_solution(prob, alg, x, fx; retcode = tc_cache.retcode)
     end
     return nothing
 end
@@ -381,13 +350,6 @@ end
 
 @inline __reshape(x::Number, args...) = x
 @inline __reshape(x::AbstractArray, args...) = reshape(x, args...)
-
-# Override cases which might be used in a kernel launch
-__get_tolerance(x, η, ::Type{T}) where {T} = DiffEqBase._get_tolerance(η, T)
-function __get_tolerance(x::Union{SArray, Number}, ::Nothing, ::Type{T}) where {T}
-    η = real(oneunit(T)) * (eps(real(one(T))))^(real(T)(0.8))
-    return T(η)
-end
 
 # Extension
 function __zygote_compute_nlls_vjp end

@@ -13,7 +13,7 @@ function SciMLBase.solve(prob::IntervalNonlinearProblem, alg::Brent, args...;
     fl, fr = f(left), f(right)
     ϵ = eps(convert(typeof(fl), 1))
 
-    abstol = __get_tolerance(nothing, abstol,
+    abstol = NonlinearSolveBase.get_tolerance(nothing, abstol,
         promote_type(eltype(first(prob.tspan)), eltype(last(prob.tspan))))
 
     if iszero(fl)
