@@ -73,7 +73,7 @@ function (cache::LiFukushimaLineSearchCache)(u, δu)
     fx_norm = ϕ(T(0))
 
     # Non-Blocking exit if the norm is NaN or Inf
-    DiffEqBase.NAN_CHECK(fx_norm) && return cache.α
+    NonlinearSolveBase.NAN_CHECK(fx_norm) && return cache.α
 
     # Early Terminate based on Eq. 2.7
     du_norm = NONLINEARSOLVE_DEFAULT_NORM(δu)
@@ -84,12 +84,12 @@ function (cache::LiFukushimaLineSearchCache)(u, δu)
     fxλp_norm = ϕ(λ₂)
 
     if cache.nan_maxiters !== nothing
-        if DiffEqBase.NAN_CHECK(fxλp_norm)
+        if NonlinearSolveBase.NAN_CHECK(fxλp_norm)
             nan_converged = false
             for _ in 1:(cache.nan_maxiters)
                 λ₁, λ₂ = λ₂, cache.β * λ₂
                 fxλp_norm = ϕ(λ₂)
-                nan_converged = DiffEqBase.NAN_CHECK(fxλp_norm)::Bool
+                nan_converged = NonlinearSolveBase.NAN_CHECK(fxλp_norm)::Bool
                 nan_converged && break
             end
             nan_converged || return cache.α
