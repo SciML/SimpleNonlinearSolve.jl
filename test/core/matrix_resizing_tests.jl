@@ -1,4 +1,6 @@
 @testitem "Matrix Resizing" begin
+    using FiniteDiff, ForwardDiff
+
     ff(u, p) = u .* u .- p
     u0 = ones(2, 3)
     p = 2.0

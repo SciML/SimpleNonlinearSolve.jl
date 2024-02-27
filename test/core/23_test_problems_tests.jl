@@ -1,5 +1,6 @@
 @testsetup module RobustnessTesting
 using LinearAlgebra, NonlinearProblemLibrary, NonlinearSolveBase, SciMLBase, Test
+using FiniteDiff, ForwardDiff
 
 problems = NonlinearProblemLibrary.problems
 dicts = NonlinearProblemLibrary.dicts

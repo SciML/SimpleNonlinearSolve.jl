@@ -1,8 +1,7 @@
 @testsetup module RootfindingTesting
 using Reexport
-@reexport using AllocCheck,
-                LinearSolve, StaticArrays, Random, LinearAlgebra, ForwardDiff,
-                NonlinearSolveBase
+@reexport using AllocCheck, LinearSolve, StaticArrays, Random, LinearAlgebra, ForwardDiff,
+                NonlinearSolveBase, FiniteDiff
 import PolyesterForwardDiff
 
 quadratic_f(u, p) = u .* u .- p

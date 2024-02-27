@@ -3,13 +3,10 @@ module SimpleNonlinearSolve
 import PrecompileTools: @compile_workload, @setup_workload, @recompile_invalidations
 
 @recompile_invalidations begin
-    using ADTypes, ArrayInterface, FiniteDiff, ForwardDiff, NonlinearSolveBase, Reexport,
-          LinearAlgebra, SciMLBase
+    using ADTypes, ArrayInterface, NonlinearSolveBase, Reexport, LinearAlgebra, SciMLBase
 
     import ConcreteStructs: @concrete
-    import DiffResults
     import FastClosures: @closure
-    import ForwardDiff: Dual
     import MaybeInplace: @bb, setindex_trait, CanSetindex, CannotSetindex
     import NonlinearSolveBase: AbstractNonlinearTerminationMode,
                                AbstractSafeNonlinearTerminationMode,
@@ -47,8 +44,12 @@ include("bracketing/brent.jl")
 include("bracketing/alefeld.jl")
 include("bracketing/itp.jl")
 
-# AD
-include("ad.jl")
+# AD: Defined in Extension
+## DONT REMOVE THESE: They are used in NonlinearSolve.jl
+function __nlsolve_ad end
+function __nlsolve_∂f_∂p end
+function __nlsolve_∂f_∂u end
+function __nlsolve_dual_soln end
 
 ## Default algorithm
 
@@ -85,16 +86,19 @@ end
 
 @setup_workload begin
     for T in (Float32, Float64)
+        # FIXME Move this precompilation into the forwarddiff & finitediff extensions
         prob_no_brack_scalar = NonlinearProblem{false}((u, p) -> u .* u .- p, T(0.1), T(2))
         prob_no_brack_iip = NonlinearProblem{true}((du, u, p) -> du .= u .* u .- p,
             T.([1.0, 1.0, 1.0]), T(2))
         prob_no_brack_oop = NonlinearProblem{false}((u, p) -> u .* u .- p,
             T.([1.0, 1.0, 1.0]), T(2))
 
-        algs = [SimpleNewtonRaphson(), SimpleBroyden(), SimpleKlement(), SimpleDFSane(),
-            SimpleTrustRegion(), SimpleLimitedMemoryBroyden(; threshold = 2)]
+        algs = [SimpleBroyden(), SimpleKlement(), SimpleDFSane(),
+            SimpleLimitedMemoryBroyden(; threshold = 2)]
 
-        algs_no_iip = [SimpleHalley()]
+        # algs = [SimpleNewtonRaphson(), SimpleTrustRegion()]
+
+        # algs_no_iip = [SimpleHalley()]
 
         @compile_workload begin
             for alg in algs
@@ -103,10 +107,10 @@ end
                 solve(prob_no_brack_oop, alg, abstol = T(1e-2))
             end
 
-            for alg in algs_no_iip
-                solve(prob_no_brack_scalar, alg, abstol = T(1e-2))
-                solve(prob_no_brack_oop, alg, abstol = T(1e-2))
-            end
+            # for alg in algs_no_iip
+            #     solve(prob_no_brack_scalar, alg, abstol = T(1e-2))
+            #     solve(prob_no_brack_oop, alg, abstol = T(1e-2))
+            # end
         end
 
         prob_brack = IntervalNonlinearProblem{false}((u, p) -> u * u - p,

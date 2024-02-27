@@ -1,5 +1,5 @@
 @testitem "Solving on GPUs" begin
-    using StaticArrays, CUDA
+    using StaticArrays, CUDA, FiniteDiff, ForwardDiff
 
     CUDA.allowscalar(false)
 
@@ -37,7 +37,7 @@
 end
 
 @testitem "CUDA Kernel Launch Test" begin
-    using StaticArrays, CUDA
+    using StaticArrays, CUDA, FiniteDiff, ForwardDiff
 
     CUDA.allowscalar(false)
 
