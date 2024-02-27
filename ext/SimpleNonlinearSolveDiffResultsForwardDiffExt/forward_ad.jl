@@ -1,6 +1,7 @@
-function SciMLBase.solve(
+function solve(
         prob::NonlinearProblem{<:Union{Number, <:AbstractArray},
-            iip, <:Union{<:Dual{T, V, P}, <:AbstractArray{<:Dual{T, V, P}}}},
+            iip, <:Union{
+                <:ForwardDiff.Dual{T, V, P}, <:AbstractArray{<:ForwardDiff.Dual{T, V, P}}}},
         alg::AbstractSimpleNonlinearSolveAlgorithm, args...; kwargs...) where {T, V, P, iip}
     sol, partials = __nlsolve_ad(prob, alg, args...; kwargs...)
     dual_soln = __nlsolve_dual_soln(sol.u, partials, prob.p)
@@ -8,9 +9,9 @@ function SciMLBase.solve(
         prob, alg, dual_soln, sol.resid; sol.retcode, sol.stats, sol.original)
 end
 
-function SciMLBase.solve(
+function solve(
         prob::NonlinearLeastSquaresProblem{<:AbstractArray,
-            iip, <:Union{<:AbstractArray{<:Dual{T, V, P}}}},
+            iip, <:Union{<:AbstractArray{<:ForwardDiff.Dual{T, V, P}}}},
         alg::AbstractSimpleNonlinearSolveAlgorithm, args...; kwargs...) where {T, V, P, iip}
     sol, partials = __nlsolve_ad(prob, alg, args...; kwargs...)
     dual_soln = __nlsolve_dual_soln(sol.u, partials, prob.p)
@@ -22,25 +23,27 @@ for algType in (Bisection, Brent, Alefeld, Falsi, ITP, Ridder)
     @eval begin
         function SciMLBase.solve(
                 prob::IntervalNonlinearProblem{uType, iip,
-                    <:Union{<:Dual{T, V, P}, <:AbstractArray{<:Dual{T, V, P}}}},
+                    <:Union{<:ForwardDiff.Dual{T, V, P},
+                        <:AbstractArray{<:ForwardDiff.Dual{T, V, P}}}},
                 alg::$(algType), args...; kwargs...) where {uType, T, V, P, iip}
             sol, partials = __nlsolve_ad(prob, alg, args...; kwargs...)
             dual_soln = __nlsolve_dual_soln(sol.u, partials, prob.p)
             return SciMLBase.build_solution(prob, alg, dual_soln, sol.resid; sol.retcode,
-                sol.stats, sol.original, left = Dual{T, V, P}(sol.left, partials),
-                right = Dual{T, V, P}(sol.right, partials))
+                sol.stats, sol.original, left = ForwardDiff.Dual{T, V, P}(
+                    sol.left, partials),
+                right = ForwardDiff.Dual{T, V, P}(sol.right, partials))
         end
     end
 end
 
 function __nlsolve_ad(
         prob::Union{IntervalNonlinearProblem, NonlinearProblem}, alg, args...; kwargs...)
-    p = value(prob.p)
+    p = SimpleNonlinearSolve.value(prob.p)
     if prob isa IntervalNonlinearProblem
-        tspan = value.(prob.tspan)
+        tspan = SimpleNonlinearSolve.value.(prob.tspan)
         newprob = IntervalNonlinearProblem(prob.f, tspan, p; prob.kwargs...)
     else
-        u0 = value(prob.u0)
+        u0 = SimpleNonlinearSolve.value(prob.u0)
         newprob = NonlinearProblem(prob.f, u0, p; prob.kwargs...)
     end
 
@@ -66,8 +69,8 @@ function __nlsolve_ad(
 end
 
 function __nlsolve_ad(prob::NonlinearLeastSquaresProblem, alg, args...; kwargs...)
-    p = value(prob.p)
-    u0 = value(prob.u0)
+    p = SimpleNonlinearSolve.value(prob.p)
+    u0 = SimpleNonlinearSolve.value(prob.u0)
     newprob = NonlinearLeastSquaresProblem(prob.f, u0, p; prob.kwargs...)
 
     sol = solve(newprob, alg, args...; kwargs...)
@@ -77,7 +80,7 @@ function __nlsolve_ad(prob::NonlinearLeastSquaresProblem, alg, args...; kwargs..
     # First check for custom `vjp` then custom `Jacobian` and if nothing is provided use
     # nested autodiff as the last resort
     if SciMLBase.has_vjp(prob.f)
-        if isinplace(prob)
+        if SciMLBase.isinplace(prob)
             _F = @closure (du, u, p) -> begin
                 resid = similar(du, length(sol.resid))
                 prob.f(resid, u, p)
@@ -92,7 +95,7 @@ function __nlsolve_ad(prob::NonlinearLeastSquaresProblem, alg, args...; kwargs..
             end
         end
     elseif SciMLBase.has_jac(prob.f)
-        if isinplace(prob)
+        if SciMLBase.isinplace(prob)
             _F = @closure (du, u, p) -> begin
                 J = similar(du, length(sol.resid), length(u))
                 prob.f.jac(J, u, p)
@@ -107,7 +110,7 @@ function __nlsolve_ad(prob::NonlinearLeastSquaresProblem, alg, args...; kwargs..
             end
         end
     else
-        if isinplace(prob)
+        if SciMLBase.isinplace(prob)
             _F = @closure (du, u, p) -> begin
                 resid = similar(du, length(sol.resid))
                 res = DiffResults.DiffResult(
@@ -120,8 +123,10 @@ function __nlsolve_ad(prob::NonlinearLeastSquaresProblem, alg, args...; kwargs..
             end
         else
             # For small problems, nesting ForwardDiff is actually quite fast
-            if __is_extension_loaded(Val(:Zygote)) && (length(uu) + length(sol.resid) ≥ 50)
-                _F = @closure (u, p) -> __zygote_compute_nlls_vjp(prob.f, u, p)
+            if SimpleNonlinearSolve.__is_extension_loaded(Val(:Zygote)) &&
+               (length(uu) + length(sol.resid) ≥ 50)
+                _F = @closure (u, p) -> SimpleNonlinearSolve.__zygote_compute_nlls_vjp(
+                    prob.f, u, p)
             else
                 _F = @closure (u, p) -> begin
                     T = promote_type(eltype(u), eltype(p))
@@ -156,7 +161,7 @@ function __nlsolve_ad(prob::NonlinearLeastSquaresProblem, alg, args...; kwargs..
 end
 
 @inline function __nlsolve_∂f_∂p(prob, f::F, u, p) where {F}
-    if isinplace(prob)
+    if SciMLBase.isinplace(prob)
         __f = p -> begin
             du = similar(u, promote_type(eltype(u), eltype(p)))
             f(du, u, p)
@@ -166,16 +171,16 @@ end
         __f = Base.Fix1(f, u)
     end
     if p isa Number
-        return __reshape(ForwardDiff.derivative(__f, p), :, 1)
+        return SimpleNonlinearSolve.__reshape(ForwardDiff.derivative(__f, p), :, 1)
     elseif u isa Number
-        return __reshape(ForwardDiff.gradient(__f, p), 1, :)
+        return SimpleNonlinearSolve.__reshape(ForwardDiff.gradient(__f, p), 1, :)
     else
         return ForwardDiff.jacobian(__f, p)
     end
 end
 
 @inline function __nlsolve_∂f_∂u(prob, f::F, u, p) where {F}
-    if isinplace(prob)
+    if SciMLBase.isinplace(prob)
         du = similar(u)
         __f = (du, u) -> f(du, u, p)
         ForwardDiff.jacobian(__f, du, u)
@@ -190,12 +195,15 @@ end
 end
 
 @inline function __nlsolve_dual_soln(u::Number, partials,
-        ::Union{<:AbstractArray{<:Dual{T, V, P}}, Dual{T, V, P}}) where {T, V, P}
-    return Dual{T, V, P}(u, partials)
+        ::Union{<:AbstractArray{<:ForwardDiff.Dual{T, V, P}}, ForwardDiff.Dual{T, V, P}}) where {
+        T, V, P}
+    return ForwardDiff.Dual{T, V, P}(u, partials)
 end
 
-@inline function __nlsolve_dual_soln(u::AbstractArray, partials,
-        ::Union{<:AbstractArray{<:Dual{T, V, P}}, Dual{T, V, P}}) where {T, V, P}
-    _partials = _restructure(u, partials)
-    return map(((uᵢ, pᵢ),) -> Dual{T, V, P}(uᵢ, pᵢ), zip(u, _partials))
+@inline function __nlsolve_dual_soln(u::AbstractArray,
+        partials,
+        ::Union{<:AbstractArray{<:ForwardDiff.Dual{T, V, P}}, ForwardDiff.Dual{T, V, P}}) where {
+        T, V, P}
+    _partials = SimpleNonlinearSolve._restructure(u, partials)
+    return map(((uᵢ, pᵢ),) -> ForwardDiff.Dual{T, V, P}(uᵢ, pᵢ), zip(u, _partials))
 end

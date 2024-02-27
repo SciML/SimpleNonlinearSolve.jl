@@ -1,5 +1,5 @@
 @testitem "Nonlinear Least Squares" begin
-    using LinearAlgebra
+    using LinearAlgebra, FiniteDiff, ForwardDiff
 
     true_function(x, θ) = @. θ[1] * exp(θ[2] * x) * cos(θ[3] * x + θ[4])
 
