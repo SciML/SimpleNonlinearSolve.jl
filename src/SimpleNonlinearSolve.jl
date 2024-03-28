@@ -37,6 +37,7 @@ include("nlsolve/klement.jl")
 include("nlsolve/trustRegion.jl")
 include("nlsolve/halley.jl")
 include("nlsolve/dfsane.jl")
+include("nlsolve/jfnk.jl")
 
 ## Interval Nonlinear Solvers
 include("bracketing/bisection.jl")
