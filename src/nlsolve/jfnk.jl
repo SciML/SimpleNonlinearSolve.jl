@@ -3,7 +3,7 @@
 A low overhead Jacobian-free Newton-Krylov method. This method internally uses `GMRES` to
 avoid computing the Jacobian Matrix.
 !!! warning
-    JFNK doesn't work well without preconditioning, which is currently not supported. We
+    JFNK may not work well without preconditioning, which is currently not supported. We
     recommend using `NewtonRaphson(linsolve = KrylovJL_GMRES())` for preconditioning
     support.
 """
