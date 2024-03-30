@@ -1,14 +1,17 @@
 module SimpleNonlinearSolveChainRulesCoreDiffEqBaseExt
 
-using SciMLBase
-import DiffEqBase, SimpleNonlinearSolve
-import ChainRulesCore as CRC
+using DiffEqBase: DiffEqBase
+using SciMLBase: SciMLBase, AbstractNonlinearProblem
+using SimpleNonlinearSolve: SimpleNonlinearSolve
+using ChainRulesCore: ChainRulesCore
+
+const CRC = ChainRulesCore
 
 # The expectation here is that no-one is using this directly inside a GPU kernel. We can
 # eventually lift this requirement using a custom adjoint
 function CRC.rrule(
-        ::typeof(SimpleNonlinearSolve.__internal_solve_up), prob::NonlinearProblem,
-        sensealg::Union{Nothing, DiffEqBase.AbstractSensitivityAlgorithm}, u0, u0_changed,
+        ::typeof(SimpleNonlinearSolve.__internal_solve_up), prob::AbstractNonlinearProblem,
+        sensealg::Union{Nothing, SciMLBase.AbstractSensitivityAlgorithm}, u0, u0_changed,
         p, p_changed, alg, args...; kwargs...)
     out, ∇internal = DiffEqBase._solve_adjoint(prob, sensealg, u0, p,
         SciMLBase.ChainRulesOriginator(), alg, args...; kwargs...)
