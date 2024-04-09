@@ -378,3 +378,5 @@ end
 
 # Extension
 function __zygote_compute_nlls_vjp end
+
+function __call_KrylovJL_GMRES end
