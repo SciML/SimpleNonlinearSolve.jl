@@ -1,13 +1,13 @@
 """
-    Muller()
+    SimpleMuller()
 
 Muller's method.
 """
-struct Muller <: AbstractSimpleNonlinearSolveAlgorithm end
+struct SimpleMuller <: AbstractSimpleNonlinearSolveAlgorithm end
 
-function SciMLBase.solve(prob::NonlinearProblem, alg::Muller, args...;
+function SciMLBase.solve(prob::NonlinearProblem, alg::SimpleMuller, args...;
     abstol = nothing, maxiters = 1000, kwargs...)
-    @assert !isinplace(prob) "`Muller` only supports OOP problems."
+    @assert !isinplace(prob) "`SimpleMuller` only supports OOP problems."
     xᵢ₋₂, xᵢ₋₁, xᵢ = prob.u0
     @assert xᵢ₋₂ ≠ xᵢ₋₁ ≠ xᵢ ≠ xᵢ₋₂
     f = Base.Fix2(prob.f, prob.p)

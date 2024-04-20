@@ -116,7 +116,7 @@ end
 end
 
 export SimpleBroyden, SimpleDFSane, SimpleGaussNewton, SimpleHalley, SimpleKlement,
-       SimpleLimitedMemoryBroyden, SimpleNewtonRaphson, SimpleTrustRegion, Muller
+       SimpleLimitedMemoryBroyden, SimpleNewtonRaphson, SimpleTrustRegion, SimpleMuller
 export Alefeld, Bisection, Brent, Falsi, ITP, Ridder
 
 end # module
