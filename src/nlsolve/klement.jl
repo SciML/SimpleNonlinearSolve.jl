@@ -25,7 +25,7 @@ function SciMLBase.__solve(prob::NonlinearProblem, alg::SimpleKlement, args...;
     @bb δx² = similar(x)
 
     for _ in 1:maxiters
-        any(iszero, J) && (J = __init_identity_jacobian!!(J))
+        any(any(iszero, J)) && (J = __init_identity_jacobian!!(J))
 
         @bb @. δx = fprev / J
 

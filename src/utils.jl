@@ -22,6 +22,9 @@ __max_tdir(a, b, x0, x1) = ifelse(x1 > x0, max(a, b), min(a, b))
 __standard_tag(::Nothing, f::F, x::AbstractArray{T}) where {F, T} = ForwardDiff.Tag(f, T)
 __standard_tag(tag::ForwardDiff.Tag, f::F, x::AbstractArray{T}) where {F, T} = tag
 __standard_tag(tag, f::F, x::AbstractArray{T}) where {F, T} = ForwardDiff.Tag(tag, T)
+__standard_tag(::Nothing, f::F, x::T) where {F, T <: Number} = ForwardDiff.Tag(f, T)
+__standard_tag(tag::ForwardDiff.Tag, f::F, x::T) where {F, T <: Number} = tag
+__standard_tag(tag, f::F, x::T) where {F, T <: Number} = ForwardDiff.Tag(tag, T)
 
 __pick_forwarddiff_chunk(x) = ForwardDiff.Chunk(length(x))
 function __pick_forwarddiff_chunk(x::StaticArray)
@@ -40,7 +43,7 @@ function __get_jacobian_config(ad::AutoForwardDiff{CS}, f::F, x) where {F, CS}
 end
 function __get_jacobian_config(ad::AutoForwardDiff{CS}, f!::F, y, x) where {F, CS}
     ck = (CS === nothing || CS ≤ 0) ? __pick_forwarddiff_chunk(x) : ForwardDiff.Chunk{CS}()
-    tag = __standard_tag(ad.tag, f, x)
+    tag = __standard_tag(ad.tag, f!, x)
     return ForwardDiff.JacobianConfig(f!, y, x, ck, tag)
 end
 
@@ -76,7 +79,7 @@ function value_and_jacobian(ad, f::F, y, x::X, p, cache; J = nothing) where {F, 
             return y, J
         elseif ad isa AutoForwardDiff
             res = DiffResults.DiffResult(y, J)
-            ForwardDiff.jacobian!(res, _f, y, x, cache)
+            ForwardDiff.jacobian!(res, _f, y, x, cache, Val(false))
             return DiffResults.value(res), DiffResults.jacobian(res)
         elseif ad isa AutoFiniteDiff
             FiniteDiff.finite_difference_jacobian!(J, _f, x, cache)
@@ -95,10 +98,10 @@ function value_and_jacobian(ad, f::F, y, x::X, p, cache; J = nothing) where {F, 
         elseif ad isa AutoForwardDiff
             if ArrayInterface.can_setindex(x)
                 res = DiffResults.DiffResult(y, J)
-                ForwardDiff.jacobian!(res, _f, x, cache)
+                ForwardDiff.jacobian!(res, _f, x, cache, Val(false))
                 return DiffResults.value(res), DiffResults.jacobian(res)
             else
-                J_fd = ForwardDiff.jacobian(_f, x, cache)
+                J_fd = ForwardDiff.jacobian(_f, x, cache, Val(false))
                 return _f(x), J_fd
             end
         elseif ad isa AutoFiniteDiff
