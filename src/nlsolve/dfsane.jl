@@ -110,7 +110,7 @@ function SciMLBase.__solve(prob::NonlinearProblem, alg::SimpleDFSane{M}, args...
         fx_norm_new = NONLINEARSOLVE_DEFAULT_NORM(fx)^nexp
 
         while k < maxiters
-            Bool(fx_norm_new ≤ (f_bar + η - γ * α_p^2 * fx_norm)) && break
+            all(fx_norm_new ≤ (f_bar + η - γ * α_p^2 * fx_norm)) && break
 
             α_tp = α_p^2 * fx_norm / (fx_norm_new + (T(2) * α_p - T(1)) * fx_norm)
             @bb @. x_cache = x - α_m * d
@@ -118,7 +118,7 @@ function SciMLBase.__solve(prob::NonlinearProblem, alg::SimpleDFSane{M}, args...
             fx = __eval_f(prob, fx, x_cache)
             fx_norm_new = NONLINEARSOLVE_DEFAULT_NORM(fx)^nexp
 
-            Bool(fx_norm_new ≤ (f_bar + η - γ * α_m^2 * fx_norm)) && break
+            all(fx_norm_new ≤ (f_bar + η - γ * α_m^2 * fx_norm)) && break
 
             α_tm = α_m^2 * fx_norm / (fx_norm_new + (T(2) * α_m - T(1)) * fx_norm)
             α_p = clamp(α_tp, τ_min * α_p, τ_max * α_p)

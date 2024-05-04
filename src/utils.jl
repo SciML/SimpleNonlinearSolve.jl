@@ -321,19 +321,19 @@ function check_termination(tc_cache, fx, x, xo, prob, alg)
 end
 function check_termination(tc_cache, fx, x, xo, prob, alg,
         ::AbstractNonlinearTerminationMode)
-    tc_cache(fx, x, xo) &&
+    all(tc_cache(fx, x, xo)) &&
         return build_solution(prob, alg, x, fx; retcode = ReturnCode.Success)
     return nothing
 end
 function check_termination(tc_cache, fx, x, xo, prob, alg,
         ::AbstractSafeNonlinearTerminationMode)
-    tc_cache(fx, x, xo) &&
+    all(tc_cache(fx, x, xo)) &&
         return build_solution(prob, alg, x, fx; retcode = tc_cache.retcode)
     return nothing
 end
 function check_termination(tc_cache, fx, x, xo, prob, alg,
         ::AbstractSafeBestNonlinearTerminationMode)
-    if tc_cache(fx, x, xo)
+    if all(tc_cache(fx, x, xo))
         if isinplace(prob)
             prob.f(fx, x, prob.p)
         else
