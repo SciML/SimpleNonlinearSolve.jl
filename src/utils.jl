@@ -1,10 +1,3 @@
-struct SimpleNonlinearSolveTag end
-
-function ForwardDiff.checktag(::Type{<:ForwardDiff.Tag{<:SimpleNonlinearSolveTag, <:T}},
-        f::F, x::AbstractArray{T}) where {T, F}
-    return true
-end
-
 """
     __prevfloat_tdir(x, x0, x1)
 
@@ -26,9 +19,9 @@ Return the maximum of `a` and `b` if `x1 > x0`, otherwise return the minimum.
 """
 __max_tdir(a, b, x0, x1) = ifelse(x1 > x0, max(a, b), min(a, b))
 
-__standard_tag(::Nothing, x) = ForwardDiff.Tag(SimpleNonlinearSolveTag(), eltype(x))
-__standard_tag(tag::ForwardDiff.Tag, _) = tag
-__standard_tag(tag, x) = ForwardDiff.Tag(tag, eltype(x))
+__standard_tag(::Nothing, f::F, x::AbstractArray{T}) where {F, T} = ForwardDiff.Tag(f, T)
+__standard_tag(tag::ForwardDiff.Tag, f::F, x::AbstractArray{T}) where {F, T} = tag
+__standard_tag(tag, f::F, x::AbstractArray{T}) where {F, T} = ForwardDiff.Tag(tag, T)
 
 __pick_forwarddiff_chunk(x) = ForwardDiff.Chunk(length(x))
 function __pick_forwarddiff_chunk(x::StaticArray)
@@ -42,12 +35,12 @@ end
 
 function __get_jacobian_config(ad::AutoForwardDiff{CS}, f::F, x) where {F, CS}
     ck = (CS === nothing || CS ≤ 0) ? __pick_forwarddiff_chunk(x) : ForwardDiff.Chunk{CS}()
-    tag = __standard_tag(ad.tag, x)
+    tag = __standard_tag(ad.tag, f, x)
     return __forwarddiff_jacobian_config(f, x, ck, tag)
 end
 function __get_jacobian_config(ad::AutoForwardDiff{CS}, f!::F, y, x) where {F, CS}
     ck = (CS === nothing || CS ≤ 0) ? __pick_forwarddiff_chunk(x) : ForwardDiff.Chunk{CS}()
-    tag = __standard_tag(ad.tag, x)
+    tag = __standard_tag(ad.tag, f, x)
     return ForwardDiff.JacobianConfig(f!, y, x, ck, tag)
 end
 
@@ -127,12 +120,12 @@ function value_and_jacobian(ad, f::F, y, x::Number, p, cache; J = nothing) where
     if DiffEqBase.has_jac(f)
         return f(x, p), f.jac(x, p)
     elseif ad isa AutoForwardDiff
-        T = typeof(__standard_tag(ad.tag, x))
+        T = typeof(__standard_tag(ad.tag, f, x))
         out = f(ForwardDiff.Dual{T}(x, one(x)), p)
         return ForwardDiff.value(out), ForwardDiff.extract_derivative(T, out)
     elseif ad isa AutoPolyesterForwardDiff
         # Just use ForwardDiff
-        T = typeof(__standard_tag(nothing, x))
+        T = typeof(__standard_tag(nothing, f, x))
         out = f(ForwardDiff.Dual{T}(x, one(x)), p)
         return ForwardDiff.value(out), ForwardDiff.extract_derivative(T, out)
     elseif ad isa AutoFiniteDiff

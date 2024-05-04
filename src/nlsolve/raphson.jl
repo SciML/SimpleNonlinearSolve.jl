@@ -39,7 +39,8 @@ function SciMLBase.__solve(prob::Union{NonlinearProblem, NonlinearLeastSquaresPr
         fx, dfx = value_and_jacobian(autodiff, prob.f, fx, x, prob.p, jac_cache; J)
 
         if i == 1
-            iszero(fx) && build_solution(prob, alg, x, fx; retcode = ReturnCode.Success)
+            all(iszero(fx)) &&
+                build_solution(prob, alg, x, fx; retcode = ReturnCode.Success)
         else
             # Termination Checks
             tc_sol = check_termination(tc_cache, fx, x, xo, prob, alg)
