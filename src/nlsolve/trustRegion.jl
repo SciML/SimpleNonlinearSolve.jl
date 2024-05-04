@@ -92,7 +92,7 @@ function SciMLBase.__solve(prob::NonlinearProblem, alg::SimpleTrustRegion, args.
         termination_condition)
 
     # Set default trust region radius if not specified by user.
-    Δₘₐₓ == 0 && (Δₘₐₓ = max(norm_fx, maximum(x) - minimum(x)))
+    Δₘₐₓ = ifelse(iszero(Δₘₐₓ), max(norm_fx, maximum(x) - minimum(x)), Δₘₐₓ)
     if Δ == 0
         if _unwrap_val(alg.nlsolve_update_rule)
             norm_x = norm(x)
