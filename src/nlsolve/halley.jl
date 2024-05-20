@@ -78,9 +78,8 @@ function SciMLBase.__solve(prob::NonlinearProblem, alg::SimpleHalley, args...;
         cᵢ = _restructure(cᵢ, cᵢ_)
 
         if i == 1
-            if iszero(fx)
+            all(iszero(fx)) &&
                 return build_solution(prob, alg, x, fx; retcode = ReturnCode.Success)
-            end
         else
             # Termination Checks
             tc_sol = check_termination(tc_cache, fx, x, xo, prob, alg)
