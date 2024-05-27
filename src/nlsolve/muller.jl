@@ -11,6 +11,7 @@ struct SimpleMuller <: AbstractSimpleNonlinearSolveAlgorithm end
 function SciMLBase.solve(prob::NonlinearProblem, alg::SimpleMuller, args...;
     abstol = nothing, maxiters = 1000, kwargs...)
     @assert !isinplace(prob) "`SimpleMuller` only supports OOP problems."
+    @assert length(prob.u0) == 3 "`SimpleMuller` requires three initial guesses."
     xᵢ₋₂, xᵢ₋₁, xᵢ = prob.u0
     @assert xᵢ₋₂ ≠ xᵢ₋₁ ≠ xᵢ ≠ xᵢ₋₂
     f = Base.Fix2(prob.f, prob.p)
