@@ -1,7 +1,10 @@
 """
     SimpleMuller()
 
-Muller's method.
+Muller's method for determining a root of a univariate, scalar function. The
+algorithm, described in Sec. 9.5.2 of
+[Press et al. (2007)](https://numerical.recipes/book.html), requires three
+initial guesses `(xᵢ₋₂, xᵢ₋₁, xᵢ)` for the root.
 """
 struct SimpleMuller <: AbstractSimpleNonlinearSolveAlgorithm end
 
