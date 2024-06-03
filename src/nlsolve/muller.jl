@@ -13,12 +13,15 @@ function SciMLBase.solve(prob::NonlinearProblem, alg::SimpleMuller, args...;
     @assert !isinplace(prob) "`SimpleMuller` only supports OOP problems."
     @assert length(prob.u0) == 3 "`SimpleMuller` requires three initial guesses."
     xᵢ₋₂, xᵢ₋₁, xᵢ = prob.u0
+    xᵢ₋₂, xᵢ₋₁, xᵢ = promote(xᵢ₋₂, xᵢ₋₁, xᵢ)
     @assert xᵢ₋₂ ≠ xᵢ₋₁ ≠ xᵢ ≠ xᵢ₋₂
     f = Base.Fix2(prob.f, prob.p)
     fxᵢ₋₂, fxᵢ₋₁, fxᵢ = f(xᵢ₋₂), f(xᵢ₋₁), f(xᵢ)
 
     abstol = __get_tolerance(nothing, abstol,
             promote_type(eltype(fxᵢ₋₂), eltype(xᵢ₋₂)))
+
+    xᵢ₊₁, fxᵢ₊₁ = xᵢ₋₂, fxᵢ₋₂
 
     for _ ∈ 1:maxiters
         q = (xᵢ - xᵢ₋₁)/(xᵢ₋₁ - xᵢ₋₂)
