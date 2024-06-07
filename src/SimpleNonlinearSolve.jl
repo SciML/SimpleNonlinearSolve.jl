@@ -20,12 +20,13 @@ using PrecompileTools: @compile_workload, @setup_workload, @recompile_invalidati
                          mul!, norm, transpose
     using MaybeInplace: @bb, setindex_trait, CanSetindex, CannotSetindex
     using Reexport: @reexport
-    using SciMLBase: SciMLBase, AbstractNonlinearProblem, IntervalNonlinearProblem,
+    using SciMLBase: @add_kwonly, SciMLBase, AbstractNonlinearProblem, IntervalNonlinearProblem,
+                     AbstractNonlinearFunction, StandardNonlinearProblem, 
                      NonlinearFunction, NonlinearLeastSquaresProblem, NonlinearProblem,
                      ReturnCode, init, remake, solve, AbstractNonlinearAlgorithm,
-                     build_solution, isinplace, _unwrap_val
+                     build_solution, isinplace, _unwrap_val, warn_paramtype
     using Setfield: @set!
-    using StaticArraysCore: StaticArray, SVector, SMatrix, SArray, MArray, Size
+    using StaticArraysCore: StaticArray, SVector, SMatrix, SArray, MArray, Size, SizedVector, SizedMatrix
 end
 
 const DI = DifferentiationInterface
@@ -60,6 +61,7 @@ include("bracketing/itp.jl")
 
 # AD
 include("ad.jl")
+include("immutable_nonlinear_problem.jl")
 
 ## Default algorithm
 
