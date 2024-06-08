@@ -60,7 +60,7 @@ staticarray_itize(x::Matrix) = SMatrix{size(x)...}(x)
 staticarray_itize(x::SizedMatrix) = SMatrix{size(x)...}(x)
 
 function Base.convert(::Type{ImmutableNonlinearProblem}, prob::T) where {T <: NonlinearProblem}
-    ImmutableNonlinearProblem(prob.f,
+    ImmutableNonlinearProblem{isinplace(prob)}(prob.f,
         staticarray_itize(prob.u0),
         staticarray_itize(prob.p),
         prob.problem_type;
