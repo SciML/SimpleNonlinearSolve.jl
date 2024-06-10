@@ -26,7 +26,7 @@ using PrecompileTools: @compile_workload, @setup_workload, @recompile_invalidati
                      ReturnCode, init, remake, solve, AbstractNonlinearAlgorithm,
                      build_solution, isinplace, _unwrap_val, warn_paramtype
     using Setfield: @set!
-    using StaticArraysCore: StaticArray, SVector, SMatrix, SArray, MArray, Size, SizedVector, SizedMatrix
+    using StaticArrays: StaticArray, SVector, SMatrix, SArray, MArray, Size, SizedVector, SizedMatrix
 end
 
 const DI = DifferentiationInterface
@@ -73,6 +73,7 @@ end
 # Bypass the highlevel checks for NonlinearProblem for Simple Algorithms
 function SciMLBase.solve(prob::NonlinearProblem, alg::AbstractSimpleNonlinearSolveAlgorithm,
         args...; sensealg = nothing, u0 = nothing, p = nothing, kwargs...)
+    prob = convert(ImmutableNonlinearProblem, prob)
     if sensealg === nothing && haskey(prob.kwargs, :sensealg)
         sensealg = prob.kwargs[:sensealg]
     end
