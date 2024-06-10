@@ -70,8 +70,8 @@ function SciMLBase.solve(prob::IntervalNonlinearProblem, alg::Nothing, args...; 
     return solve(prob, ITP(), args...; prob.kwargs..., kwargs...)
 end
 
-# By Pass the highlevel checks for NonlinearProblem for Simple Algorithms
-function SciMLBase.solve(prob::Union{NonlinearProblem}, alg::AbstractSimpleNonlinearSolveAlgorithm,
+# Bypass the highlevel checks for NonlinearProblem for Simple Algorithms
+function SciMLBase.solve(prob::NonlinearProblem, alg::AbstractSimpleNonlinearSolveAlgorithm,
         args...; sensealg = nothing, u0 = nothing, p = nothing, kwargs...)
     if sensealg === nothing && haskey(prob.kwargs, :sensealg)
         sensealg = prob.kwargs[:sensealg]
@@ -82,15 +82,15 @@ function SciMLBase.solve(prob::Union{NonlinearProblem}, alg::AbstractSimpleNonli
         p === nothing, alg, args...; prob.kwargs..., kwargs...)
 end
 
-function SciMLBase.solve(prob::Union{ImmutableNonlinearProblem}, alg::AbstractSimpleNonlinearSolveAlgorithm,
-    args...; sensealg = nothing, u0 = nothing, p = nothing, kwargs...)
-if sensealg === nothing && haskey(prob.kwargs, :sensealg)
-    sensealg = prob.kwargs[:sensealg]
-end
-new_u0 = u0 !== nothing ? u0 : prob.u0
-new_p = p !== nothing ? p : prob.p
-return __internal_solve_up(prob, sensealg, new_u0, u0 === nothing, new_p,
-    p === nothing, alg, args...; prob.kwargs..., kwargs...)
+function SciMLBase.solve(prob::ImmutableNonlinearProblem, alg::AbstractSimpleNonlinearSolveAlgorithm,
+        args...; sensealg = nothing, u0 = nothing, p = nothing, kwargs...)
+    if sensealg === nothing && haskey(prob.kwargs, :sensealg)
+        sensealg = prob.kwargs[:sensealg]
+    end
+    new_u0 = u0 !== nothing ? u0 : prob.u0
+    new_p = p !== nothing ? p : prob.p
+    return __internal_solve_up(prob, sensealg, new_u0, u0 === nothing, new_p,
+        p === nothing, alg, args...; prob.kwargs..., kwargs...)
 end
 
 function __internal_solve_up(_prob::Union{NonlinearProblem, ImmutableNonlinearProblem}, sensealg, u0, u0_changed,
