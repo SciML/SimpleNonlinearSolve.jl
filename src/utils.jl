@@ -155,7 +155,7 @@ function init_termination_cache(
         prob, abstol, reltol, du, u, AbsNormTerminationMode(Base.Fix2(norm, 2)))
 end
 
-function init_termination_cache(prob::Union{NonlinearProblem, ImmutableNonlinearProblem, NonlinearLeastSquaresProblem},
+function init_termination_cache(prob::Union{ImmutableNonlinearProblem, NonlinearLeastSquaresProblem},
         abstol, reltol, du, u, tc::AbstractNonlinearTerminationMode)
     T = promote_type(eltype(du), eltype(u))
     abstol = __get_tolerance(u, abstol, T)
