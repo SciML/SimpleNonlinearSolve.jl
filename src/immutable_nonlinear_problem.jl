@@ -53,16 +53,11 @@ function ImmutableNonlinearProblem(prob::AbstractNonlinearProblem)
     ImmutableNonlinearProblem{isinplace(prob)}(prob.f, prob.u0, prob.p)
 end
 
-staticarray_itize(x) = x
-staticarray_itize(x::Vector) = SVector{length(x)}(x)
-staticarray_itize(x::SizedVector) = SVector{length(x)}(x)
-staticarray_itize(x::Matrix) = SMatrix{size(x)...}(x)
-staticarray_itize(x::SizedMatrix) = SMatrix{size(x)...}(x)
 
 function Base.convert(::Type{ImmutableNonlinearProblem}, prob::T) where {T <: NonlinearProblem}
     ImmutableNonlinearProblem{isinplace(prob)}(prob.f,
-        staticarray_itize(prob.u0),
-        staticarray_itize(prob.p),
+        prob.u0,
+        prob.p,
         prob.problem_type;
         prob.kwargs...)
 end
