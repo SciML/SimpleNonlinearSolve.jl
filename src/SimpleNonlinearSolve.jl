@@ -35,7 +35,7 @@ abstract type AbstractBracketingAlgorithm <: AbstractSimpleNonlinearSolveAlgorit
 abstract type AbstractNewtonAlgorithm <: AbstractSimpleNonlinearSolveAlgorithm end
 
 @inline __is_extension_loaded(::Val) = false
-
+include("immutable_nonlinear_problem.jl")
 include("utils.jl")
 include("linesearch.jl")
 
@@ -67,8 +67,20 @@ function SciMLBase.solve(prob::IntervalNonlinearProblem, alg::Nothing, args...; 
     return solve(prob, ITP(), args...; prob.kwargs..., kwargs...)
 end
 
-# By Pass the highlevel checks for NonlinearProblem for Simple Algorithms
+# Bypass the highlevel checks for NonlinearProblem for Simple Algorithms
 function SciMLBase.solve(prob::NonlinearProblem, alg::AbstractSimpleNonlinearSolveAlgorithm,
+        args...; sensealg = nothing, u0 = nothing, p = nothing, kwargs...)
+    prob = convert(ImmutableNonlinearProblem, prob)
+    if sensealg === nothing && haskey(prob.kwargs, :sensealg)
+        sensealg = prob.kwargs[:sensealg]
+    end
+    new_u0 = u0 !== nothing ? u0 : prob.u0
+    new_p = p !== nothing ? p : prob.p
+    return __internal_solve_up(prob, sensealg, new_u0, u0 === nothing, new_p,
+        p === nothing, alg, args...; prob.kwargs..., kwargs...)
+end
+
+function SciMLBase.solve(prob::ImmutableNonlinearProblem, alg::AbstractSimpleNonlinearSolveAlgorithm,
         args...; sensealg = nothing, u0 = nothing, p = nothing, kwargs...)
     if sensealg === nothing && haskey(prob.kwargs, :sensealg)
         sensealg = prob.kwargs[:sensealg]
@@ -79,7 +91,7 @@ function SciMLBase.solve(prob::NonlinearProblem, alg::AbstractSimpleNonlinearSol
         p === nothing, alg, args...; prob.kwargs..., kwargs...)
 end
 
-function __internal_solve_up(_prob::NonlinearProblem, sensealg, u0, u0_changed,
+function __internal_solve_up(_prob::Union{NonlinearProblem, ImmutableNonlinearProblem}, sensealg, u0, u0_changed,
         p, p_changed, alg, args...; kwargs...)
     prob = u0_changed || p_changed ? remake(_prob; u0, p) : _prob
     return SciMLBase.__solve(prob, alg, args...; kwargs...)
