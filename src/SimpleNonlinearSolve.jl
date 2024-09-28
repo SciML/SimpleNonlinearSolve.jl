@@ -48,6 +48,7 @@ include("nlsolve/klement.jl")
 include("nlsolve/trustRegion.jl")
 include("nlsolve/halley.jl")
 include("nlsolve/dfsane.jl")
+include("nlsolve/muller.jl")
 
 ## Interval Nonlinear Solvers
 include("bracketing/bisection.jl")
@@ -138,7 +139,7 @@ end
 
 export AutoFiniteDiff, AutoForwardDiff, AutoPolyesterForwardDiff
 export SimpleBroyden, SimpleDFSane, SimpleGaussNewton, SimpleHalley, SimpleKlement,
-       SimpleLimitedMemoryBroyden, SimpleNewtonRaphson, SimpleTrustRegion
+       SimpleLimitedMemoryBroyden, SimpleNewtonRaphson, SimpleTrustRegion, SimpleMuller
 export Alefeld, Bisection, Brent, Falsi, ITP, Ridder
 
 end # module
