@@ -206,8 +206,8 @@ end
 @inline value(x::Dual) = ForwardDiff.value(x)
 @inline value(x::AbstractArray{<:Dual}) = map(ForwardDiff.value, x)
 
-@inline __eval_f(prob, fx, x) = isinplace(prob) ? (prob.f(fx, x, prob.p); fx) :
-                                prob.f(x, prob.p)
+@inline __eval_f(
+    prob, fx, x) = isinplace(prob) ? (prob.f(fx, x, prob.p); fx) : prob.f(x, prob.p)
 
 # Unalias
 @inline __maybe_unaliased(x::Union{Number, SArray}, ::Bool) = x

@@ -48,8 +48,8 @@ function SciMLBase.__solve(prob::ImmutableNonlinearProblem, alg::SimpleBroyden, 
     @bb δJ⁻¹n = copy(x)
     @bb δJ⁻¹ = copy(J⁻¹)
 
-    abstol, reltol, tc_cache = init_termination_cache(
-        prob, abstol, reltol, fx, x, termination_condition)
+    abstol, reltol,
+    tc_cache = init_termination_cache(prob, abstol, reltol, fx, x, termination_condition)
 
     ls_cache = __get_linesearch(alg) === Val(true) ? LiFukushimaLineSearch()(prob, fx, x) :
                nothing

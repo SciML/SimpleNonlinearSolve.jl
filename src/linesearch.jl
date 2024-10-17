@@ -50,7 +50,8 @@ function __generic_init(alg::LiFukushimaLineSearch, prob, fu, u)
     @bb fu_cache = similar(fu)
     T = promote_type(eltype(fu), eltype(u))
 
-    ϕ = @closure (u, δu, α) -> begin
+    ϕ = @closure (u, δu,
+        α) -> begin
         @bb @. u_cache = u + α * δu
         return NONLINEARSOLVE_DEFAULT_NORM(__eval_f(prob, fu_cache, u_cache))
     end

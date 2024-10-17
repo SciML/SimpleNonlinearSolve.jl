@@ -63,8 +63,8 @@ end
 
     U, Vᵀ = __init_low_rank_jacobian(x, fx, x isa StaticArray ? threshold : Val(η))
 
-    abstol, reltol, tc_cache = init_termination_cache(
-        prob, abstol, reltol, fx, x, termination_condition)
+    abstol, reltol,
+    tc_cache = init_termination_cache(prob, abstol, reltol, fx, x, termination_condition)
 
     @bb xo = copy(x)
     @bb δx = copy(fx)
@@ -89,8 +89,8 @@ end
         tc_sol = check_termination(tc_cache, fx, x, xo, prob, alg)
         tc_sol !== nothing && return tc_sol
 
-        _U = selectdim(U, 2, 1:min(η, i - 1))
-        _Vᵀ = selectdim(Vᵀ, 1, 1:min(η, i - 1))
+        _U = selectdim(U, 2, 1:min(η, i-1))
+        _Vᵀ = selectdim(Vᵀ, 1, 1:min(η, i-1))
 
         vᵀ = _rmatvec!!(vᵀ_cache, Tcache, _U, _Vᵀ, δx)
         mvec = _matvec!!(mat_cache, Tcache, _U, _Vᵀ, δf)
@@ -140,7 +140,8 @@ function __static_solve(
         init_α = inv(alg.alpha)
     end
 
-    converged, res = __unrolled_lbroyden_initial_iterations(
+    converged,
+    res = __unrolled_lbroyden_initial_iterations(
         prob, xo, fo, δx, abstol, U, Vᵀ, threshold, ls_cache, init_α)
 
     converged &&
@@ -148,7 +149,7 @@ function __static_solve(
 
     xo, fo, δx = res.x, res.fx, res.δx
 
-    for i in 1:(maxiters - _unwrap_val(threshold))
+    for i in 1:(maxiters-_unwrap_val(threshold))
         α = ls_cache === nothing ? true : ls_cache(xo, δx)
         x = xo .+ α .* δx
         fx = prob.f(x, prob.p)
@@ -263,7 +264,7 @@ end
     for i in 1:S1
         push!(calls, :($(syms[i]) = x[$(i)] .* Y[$i]))
     end
-    push!(calls, :(return .+($(syms...))))
+    push!(calls, :(return .+ ($(syms...))))
     return Expr(:block, calls...)
 end
 

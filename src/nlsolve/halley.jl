@@ -33,8 +33,8 @@ function SciMLBase.__solve(prob::ImmutableNonlinearProblem, alg::SimpleHalley, a
 
     f = __fixed_parameter_function(prob)
     autodiff = __get_concrete_autodiff(prob, alg.autodiff)
-    abstol, reltol, tc_cache = init_termination_cache(
-        prob, abstol, reltol, fx, x, termination_condition)
+    abstol, reltol,
+    tc_cache = init_termination_cache(prob, abstol, reltol, fx, x, termination_condition)
 
     @bb xo = copy(x)
 
