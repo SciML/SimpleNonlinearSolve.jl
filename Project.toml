@@ -39,7 +39,7 @@ SimpleNonlinearSolveZygoteExt = "Zygote"
 
 [compat]
 ADTypes = "1.9"
-AllocCheck = "0.1.1"
+AllocCheck = "0.1.1, 0.2"
 Aqua = "0.8"
 ArrayInterface = "7.9"
 ChainRulesCore = "1.23"
