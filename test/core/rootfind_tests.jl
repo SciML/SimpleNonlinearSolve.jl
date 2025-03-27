@@ -3,6 +3,7 @@ using Reexport
 @reexport using AllocCheck, StaticArrays, Random, LinearAlgebra, ForwardDiff, DiffEqBase,
                 TaylorDiff
 import PolyesterForwardDiff
+using SimpleNonlinearSolve
 
 quadratic_f(u, p) = u .* u .- p
 quadratic_f!(du, u, p) = (du .= u .* u .- p)
