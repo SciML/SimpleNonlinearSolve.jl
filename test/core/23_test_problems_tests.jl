@@ -1,5 +1,6 @@
 @testsetup module RobustnessTesting
 using LinearAlgebra, NonlinearProblemLibrary, DiffEqBase, Test
+using SimpleNonlinearSolve
 
 problems = NonlinearProblemLibrary.problems
 dicts = NonlinearProblemLibrary.dicts

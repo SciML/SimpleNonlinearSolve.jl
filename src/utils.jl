@@ -165,17 +165,17 @@ function init_termination_cache(
     tc_ = if hasfield(typeof(tc), :internalnorm) && tc.internalnorm === nothing
         internalnorm = ifelse(
             prob isa ImmutableNonlinearProblem, Base.Fix1(maximum, abs), Base.Fix2(norm, 2))
-        DiffEqBase.set_termination_mode_internalnorm(tc, internalnorm)
+        set_termination_mode_internalnorm(tc, internalnorm)
     else
         tc
     end
     tc_cache = init(du, u, tc_; abstol, reltol, use_deprecated_retcodes = Val(false))
-    return DiffEqBase.get_abstol(tc_cache), DiffEqBase.get_reltol(tc_cache), tc_cache
+    return get_abstol(tc_cache), get_reltol(tc_cache), tc_cache
 end
 
 function check_termination(tc_cache, fx, x, xo, prob, alg)
     return check_termination(
-        tc_cache, fx, x, xo, prob, alg, DiffEqBase.get_termination_mode(tc_cache))
+        tc_cache, fx, x, xo, prob, alg, get_termination_mode(tc_cache))
 end
 function check_termination(
         tc_cache, fx, x, xo, prob, alg, ::AbstractNonlinearTerminationMode)
@@ -237,7 +237,7 @@ end
 @inline __reshape(x::AbstractArray, args...) = reshape(x, args...)
 
 # Override cases which might be used in a kernel launch
-__get_tolerance(x, η, ::Type{T}) where {T} = DiffEqBase._get_tolerance(η, T)
+__get_tolerance(x, η, ::Type{T}) where {T} = _get_tolerance(η, T)
 function __get_tolerance(x::Union{SArray, Number}, ::Nothing, ::Type{T}) where {T}
     η = real(oneunit(T)) * (eps(real(one(T))))^(real(T)(0.8))
     return T(η)

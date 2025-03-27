@@ -6,17 +6,16 @@ using ADTypes: ADTypes, AbstractADType, AutoFiniteDiff, AutoForwardDiff,
                AutoPolyesterForwardDiff
 using ArrayInterface: ArrayInterface
 using ConcreteStructs: @concrete
-using DiffEqBase: DiffEqBase, AbstractNonlinearTerminationMode,
-                  AbstractSafeNonlinearTerminationMode,
-                  AbstractSafeBestNonlinearTerminationMode, AbsNormTerminationMode,
-                  NONLINEARSOLVE_DEFAULT_NORM
+using DiffEqBase: DiffEqBase
 using DifferentiationInterface: DifferentiationInterface
 using DiffResults: DiffResults
 using FastClosures: @closure
 using FiniteDiff: FiniteDiff
 using ForwardDiff: ForwardDiff, Dual
+using EnumX
 using LinearAlgebra: LinearAlgebra, I, convert, copyto!, diagind, dot, issuccess, lu, mul!,
                      norm, transpose
+using Markdown
 using MaybeInplace: @bb, setindex_trait, CanSetindex, CannotSetindex
 using Reexport: @reexport
 using SciMLBase: @add_kwonly, SciMLBase, AbstractNonlinearProblem, IntervalNonlinearProblem,
@@ -36,6 +35,8 @@ abstract type AbstractBracketingAlgorithm <: AbstractSimpleNonlinearSolveAlgorit
 abstract type AbstractNewtonAlgorithm <: AbstractSimpleNonlinearSolveAlgorithm end
 
 @inline __is_extension_loaded(::Val) = false
+include("termination_conditions_deprecated.jl")
+include("termination_conditions.jl")
 include("immutable_nonlinear_problem.jl")
 include("utils.jl")
 include("linesearch.jl")
@@ -142,5 +143,14 @@ export SimpleBroyden, SimpleDFSane, SimpleGaussNewton, SimpleHalley, SimpleKleme
        SimpleLimitedMemoryBroyden, SimpleNewtonRaphson, SimpleTrustRegion
 export SimpleHouseholder
 export Alefeld, Bisection, Brent, Falsi, ITP, Ridder
+
+export SteadyStateDiffEqTerminationMode, SimpleNonlinearSolveTerminationMode,
+       NormTerminationMode, RelTerminationMode, RelNormTerminationMode, AbsTerminationMode,
+       AbsNormTerminationMode, RelSafeTerminationMode, AbsSafeTerminationMode,
+       RelSafeBestTerminationMode, AbsSafeBestTerminationMode
+# Deprecated API
+export NLSolveTerminationMode,
+       NLSolveSafeTerminationOptions, NLSolveTerminationCondition,
+       NLSolveSafeTerminationResult
 
 end # module
