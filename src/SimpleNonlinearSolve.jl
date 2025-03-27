@@ -144,4 +144,13 @@ export SimpleBroyden, SimpleDFSane, SimpleGaussNewton, SimpleHalley, SimpleKleme
 export SimpleHouseholder
 export Alefeld, Bisection, Brent, Falsi, ITP, Ridder
 
+export SteadyStateDiffEqTerminationMode, SimpleNonlinearSolveTerminationMode,
+       NormTerminationMode, RelTerminationMode, RelNormTerminationMode, AbsTerminationMode,
+       AbsNormTerminationMode, RelSafeTerminationMode, AbsSafeTerminationMode,
+       RelSafeBestTerminationMode, AbsSafeBestTerminationMode
+# Deprecated API
+export NLSolveTerminationMode,
+       NLSolveSafeTerminationOptions, NLSolveTerminationCondition,
+       NLSolveSafeTerminationResult
+
 end # module
