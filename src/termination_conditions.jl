@@ -54,8 +54,7 @@ const TERM_DOCS = Dict(
     :Rel => doc"``all \left(| \Delta u | \leq reltol \times | u | \right)``.",
     :RelNorm => doc"``\| \Delta u \| \leq reltol \times \| \Delta u + u \|``.",
     :Abs => doc"``all \left( | \Delta u | \leq abstol \right)``.",
-    :AbsNorm => doc"``\| \Delta u \| \leq abstol``."
-)
+    :AbsNorm => doc"``\| \Delta u \| \leq abstol``.")
 
 const __TERM_INTERNALNORM_DOCS = """
 where `internalnorm` is the norm to use for the termination condition. Special handling is
@@ -148,9 +147,10 @@ for norm_type in (:Rel, :Abs), safety in (:Safe, :SafeBest)
             function $(struct_name)(f::F = nothing; protective_threshold = nothing,
                     patience_steps = 100, patience_objective_multiplier = 3,
                     min_max_factor = 1.3, max_stalled_steps = nothing) where {F}
-                return new{__norm_type(f), typeof(max_stalled_steps), F,
-                    typeof(protective_threshold), typeof(patience_objective_multiplier),
-                    typeof(min_max_factor)}(f, protective_threshold, patience_steps,
+                return new{__norm_type(f), typeof(max_stalled_steps),
+                    F, typeof(protective_threshold),
+                    typeof(patience_objective_multiplier), typeof(min_max_factor)}(
+                    f, protective_threshold, patience_steps,
                     patience_objective_multiplier, min_max_factor, max_stalled_steps)
             end
         end
@@ -164,8 +164,8 @@ for norm_type in (:Rel, :Abs), safety in (:Safe, :SafeBest)
     end
 end
 
-@concrete mutable struct NonlinearTerminationModeCache{dep_retcode,
-    M <: AbstractNonlinearTerminationMode,
+@concrete mutable struct NonlinearTerminationModeCache{
+    dep_retcode, M <: AbstractNonlinearTerminationMode,
     R <: Union{NonlinearSafeTerminationReturnCode.T, ReturnCode.T}}
     u
     retcode::R
@@ -209,7 +209,8 @@ end
 function SciMLBase.init(du::Union{AbstractArray{T}, T}, u::Union{AbstractArray{T}, T},
         mode::AbstractNonlinearTerminationMode, saved_value_prototype...;
         use_deprecated_retcodes::Val{D} = Val(true),  # Remove in v8, warn in v7
-        abstol = nothing, reltol = nothing, kwargs...) where {D, T <: Number}
+        abstol = nothing,
+        reltol = nothing, kwargs...) where {D, T <: Number}
     abstol = _get_tolerance(abstol, T)
     reltol = _get_tolerance(reltol, T)
     TT = typeof(abstol)
@@ -229,7 +230,8 @@ function SciMLBase.init(du::Union{AbstractArray{T}, T}, u::Union{AbstractArray{T
                           Vector{TT}(undef, mode.max_stalled_steps)
         best_value = initial_objective
         max_stalled_steps = mode.max_stalled_steps
-        if ArrayInterface.can_setindex(u_) && !(u_ isa Number) &&
+        if ArrayInterface.can_setindex(u_) &&
+           !(u_ isa Number) &&
            step_norm_trace !== nothing
             u_diff_cache = similar(u_)
         else
@@ -249,22 +251,23 @@ function SciMLBase.init(du::Union{AbstractArray{T}, T}, u::Union{AbstractArray{T
 
     retcode = ifelse(D, NonlinearSafeTerminationReturnCode.Default, ReturnCode.Default)
 
-    return NonlinearTerminationModeCache{D}(u_, retcode, abstol, reltol, best_value, mode,
-        initial_objective, objectives_trace, 0, saved_value_prototype, u0_norm,
+    return NonlinearTerminationModeCache{D}(
+        u_, retcode, abstol, reltol, best_value, mode, initial_objective,
+        objectives_trace, 0, saved_value_prototype, u0_norm,
         step_norm_trace, max_stalled_steps, u_diff_cache)
 end
 
-function SciMLBase.reinit!(cache::NonlinearTerminationModeCache{dep_retcode}, du,
-        u, saved_value_prototype...; abstol = nothing, reltol = nothing,
-        kwargs...) where {dep_retcode}
+function SciMLBase.reinit!(
+        cache::NonlinearTerminationModeCache{dep_retcode}, du, u, saved_value_prototype...;
+        abstol = nothing, reltol = nothing, kwargs...) where {dep_retcode}
     T = eltype(cache.abstol)
     length(saved_value_prototype) != 0 && (cache.saved_values = saved_value_prototype)
 
     u_ = cache.mode isa AbstractSafeBestNonlinearTerminationMode ?
          (ArrayInterface.can_setindex(u) ? copy(u) : u) : nothing
     cache.u = u_
-    cache.retcode = ifelse(dep_retcode, NonlinearSafeTerminationReturnCode.Default,
-        ReturnCode.Default)
+    cache.retcode = ifelse(
+        dep_retcode, NonlinearSafeTerminationReturnCode.Default, ReturnCode.Default)
 
     cache.abstol = _get_tolerance(abstol, T)
     cache.reltol = _get_tolerance(reltol, T)
@@ -293,8 +296,8 @@ end
 
 # This dispatch is needed based on how Terminating Callback works!
 # This intentially drops the `abstol` and `reltol` arguments
-function (cache::NonlinearTerminationModeCache)(integrator::SciMLBase.AbstractODEIntegrator,
-        abstol::Number, reltol::Number, min_t)
+function (cache::NonlinearTerminationModeCache)(
+        integrator::SciMLBase.AbstractODEIntegrator, abstol::Number, reltol::Number, min_t)
     retval = cache(cache.mode, get_du(integrator), integrator.u, integrator.uprev)
     (min_t === nothing || integrator.t ≥ min_t) && return retval
     return false
@@ -303,8 +306,8 @@ function (cache::NonlinearTerminationModeCache)(du, u, uprev, args...)
     return cache(cache.mode, du, u, uprev, args...)
 end
 
-function (cache::NonlinearTerminationModeCache)(mode::AbstractNonlinearTerminationMode, du,
-        u, uprev, args...)
+function (cache::NonlinearTerminationModeCache)(
+        mode::AbstractNonlinearTerminationMode, du, u, uprev, args...)
     return check_convergence(mode, du, u, uprev, cache.abstol, cache.reltol)
 end
 
@@ -322,15 +325,17 @@ function (cache::NonlinearTerminationModeCache{dep_retcode})(
 
     # Protective Break
     if isinf(objective) || isnan(objective)
-        cache.retcode = ifelse(dep_retcode,
-            NonlinearSafeTerminationReturnCode.ProtectiveTermination, ReturnCode.Unstable)
+        cache.retcode = ifelse(
+            dep_retcode, NonlinearSafeTerminationReturnCode.ProtectiveTermination,
+            ReturnCode.Unstable)
         return true
     end
     ## By default we turn this off since it has the potential for false positives
     if cache.mode.protective_threshold !== nothing &&
        (objective > cache.initial_objective * cache.mode.protective_threshold * length(du))
-        cache.retcode = ifelse(dep_retcode,
-            NonlinearSafeTerminationReturnCode.ProtectiveTermination, ReturnCode.Unstable)
+        cache.retcode = ifelse(
+            dep_retcode, NonlinearSafeTerminationReturnCode.ProtectiveTermination,
+            ReturnCode.Unstable)
         return true
     end
 
@@ -346,8 +351,8 @@ function (cache::NonlinearTerminationModeCache{dep_retcode})(
 
     # Main Termination Condition
     if objective ≤ criteria
-        cache.retcode = ifelse(dep_retcode,
-            NonlinearSafeTerminationReturnCode.Success, ReturnCode.Success)
+        cache.retcode = ifelse(
+            dep_retcode, NonlinearSafeTerminationReturnCode.Success, ReturnCode.Success)
         return true
     end
 
@@ -364,8 +369,8 @@ function (cache::NonlinearTerminationModeCache{dep_retcode})(
                 min_obj, max_obj = extrema(cache.objectives_trace)
             end
             if min_obj < cache.mode.min_max_factor * max_obj
-                cache.retcode = ifelse(dep_retcode,
-                    NonlinearSafeTerminationReturnCode.PatienceTermination,
+                cache.retcode = ifelse(
+                    dep_retcode, NonlinearSafeTerminationReturnCode.PatienceTermination,
                     ReturnCode.Stalled)
                 return true
             end
@@ -391,22 +396,22 @@ function (cache::NonlinearTerminationModeCache{dep_retcode})(
                                cache.reltol * (max_step_norm + cache.u0_norm)
             end
             if stalled_step
-                cache.retcode = ifelse(dep_retcode,
-                    NonlinearSafeTerminationReturnCode.PatienceTermination,
+                cache.retcode = ifelse(
+                    dep_retcode, NonlinearSafeTerminationReturnCode.PatienceTermination,
                     ReturnCode.Stalled)
                 return true
             end
         end
     end
 
-    cache.retcode = ifelse(dep_retcode,
-        NonlinearSafeTerminationReturnCode.Failure, ReturnCode.Failure)
+    cache.retcode = ifelse(
+        dep_retcode, NonlinearSafeTerminationReturnCode.Failure, ReturnCode.Failure)
     return false
 end
 
 # Check Convergence
-function check_convergence(::SteadyStateDiffEqTerminationMode, duₙ, uₙ, uₙ₋₁, abstol,
-        reltol)
+function check_convergence(
+        ::SteadyStateDiffEqTerminationMode, duₙ, uₙ, uₙ₋₁, abstol, reltol)
     if __fast_scalar_indexing(duₙ, uₙ)
         return all(@closure(xy->begin
                 x, y = xy
@@ -435,9 +440,9 @@ end
 function check_convergence(::RelTerminationMode, duₙ, uₙ, uₙ₋₁, abstol, reltol)
     if __fast_scalar_indexing(duₙ, uₙ)
         return all(@closure(xy->begin
-                x, y = xy
-                return abs(x) ≤ reltol * abs(y)
-            end), zip(duₙ, uₙ))
+            x, y = xy
+            return abs(x) ≤ reltol * abs(y)
+        end), zip(duₙ, uₙ))
     else
         return all(@. abs(duₙ) ≤ reltol * abs(uₙ + duₙ))
     end
@@ -454,14 +459,22 @@ end
 function check_convergence(
         mode::Union{
             RelNormTerminationMode, RelSafeTerminationMode, RelSafeBestTerminationMode},
-        duₙ, uₙ, uₙ₋₁, abstol, reltol)
+        duₙ,
+        uₙ,
+        uₙ₋₁,
+        abstol,
+        reltol)
     return __apply_termination_internalnorm(mode.internalnorm, duₙ) ≤
            reltol * __add_and_norm(mode.internalnorm, duₙ, uₙ)
 end
 function check_convergence(
-        mode::Union{AbsNormTerminationMode, AbsSafeTerminationMode,
-            AbsSafeBestTerminationMode},
-        duₙ, uₙ, uₙ₋₁, abstol, reltol)
+        mode::Union{
+            AbsNormTerminationMode, AbsSafeTerminationMode, AbsSafeBestTerminationMode},
+        duₙ,
+        uₙ,
+        uₙ₋₁,
+        abstol,
+        reltol)
     return __apply_termination_internalnorm(mode.internalnorm, duₙ) ≤ abstol
 end
 
@@ -472,13 +485,11 @@ end
 
 # Nonlinear Solve Norm (norm(_, 2))
 NONLINEARSOLVE_DEFAULT_NORM(u::Union{AbstractFloat, Complex}) = @fastmath abs(u)
-function NONLINEARSOLVE_DEFAULT_NORM(f::F,
-        u::Union{AbstractFloat, Complex}) where {F}
+function NONLINEARSOLVE_DEFAULT_NORM(f::F, u::Union{AbstractFloat, Complex}) where {F}
     return @fastmath abs(f(u))
 end
 
-function NONLINEARSOLVE_DEFAULT_NORM(u::Array{
-        T}) where {T <: Union{AbstractFloat, Complex}}
+function NONLINEARSOLVE_DEFAULT_NORM(u::Array{T}) where {T <: Union{AbstractFloat, Complex}}
     x = zero(T)
     @inbounds @fastmath for ui in u
         x += abs2(ui)
@@ -501,9 +512,8 @@ function NONLINEARSOLVE_DEFAULT_NORM(u::StaticArray{
     return Base.FastMath.sqrt_fast(real(sum(abs2, u)))
 end
 
-function NONLINEARSOLVE_DEFAULT_NORM(f::F,
-        u::StaticArray{<:Tuple, T}) where {
-        F, T <: Union{AbstractFloat, Complex}}
+function NONLINEARSOLVE_DEFAULT_NORM(
+        f::F, u::StaticArray{<:Tuple, T}) where {F, T <: Union{AbstractFloat, Complex}}
     return Base.FastMath.sqrt_fast(real(sum(abs2 ∘ f, u)))
 end
 
@@ -525,9 +535,9 @@ NONLINEARSOLVE_DEFAULT_NORM(f::F, u) where {F} = norm(f.(u))
 @inline function __maximum(op::F, x, y) where {F}
     if __fast_scalar_indexing(x, y)
         return maximum(@closure((xᵢyᵢ)->begin
-                xᵢ, yᵢ = xᵢyᵢ
-                return op(xᵢ, yᵢ)
-            end), zip(x, y))
+            xᵢ, yᵢ = xᵢyᵢ
+            return op(xᵢ, yᵢ)
+        end), zip(x, y))
     else
         return mapreduce(@closure((xᵢ, yᵢ)->op(xᵢ, yᵢ)), max, x, y)
     end
@@ -536,9 +546,9 @@ end
 @inline function __norm_op(::typeof(Base.Fix2(norm, 2)), op::F, x, y) where {F}
     if __fast_scalar_indexing(x, y)
         return sqrt(sum(@closure((xᵢyᵢ)->begin
-                xᵢ, yᵢ = xᵢyᵢ
-                return op(xᵢ, yᵢ)^2
-            end), zip(x, y)))
+            xᵢ, yᵢ = xᵢyᵢ
+            return op(xᵢ, yᵢ)^2
+        end), zip(x, y)))
     else
         return sqrt(mapreduce(@closure((xᵢ, yᵢ)->(op(xᵢ, yᵢ)^2)), +, x, y))
     end

@@ -149,8 +149,7 @@ export SteadyStateDiffEqTerminationMode, SimpleNonlinearSolveTerminationMode,
        AbsNormTerminationMode, RelSafeTerminationMode, AbsSafeTerminationMode,
        RelSafeBestTerminationMode, AbsSafeBestTerminationMode
 # Deprecated API
-export NLSolveTerminationMode,
-       NLSolveSafeTerminationOptions, NLSolveTerminationCondition,
+export NLSolveTerminationMode, NLSolveSafeTerminationOptions, NLSolveTerminationCondition,
        NLSolveSafeTerminationResult
 
 end # module
