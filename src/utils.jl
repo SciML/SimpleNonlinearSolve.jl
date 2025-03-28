@@ -174,8 +174,7 @@ function init_termination_cache(
 end
 
 function check_termination(tc_cache, fx, x, xo, prob, alg)
-    return check_termination(
-        tc_cache, fx, x, xo, prob, alg, get_termination_mode(tc_cache))
+    return check_termination(tc_cache, fx, x, xo, prob, alg, get_termination_mode(tc_cache))
 end
 function check_termination(
         tc_cache, fx, x, xo, prob, alg, ::AbstractNonlinearTerminationMode)

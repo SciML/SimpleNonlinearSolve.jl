@@ -79,30 +79,28 @@ mutable struct NLSolveSafeTerminationResult{T, uType}
     return_code::NLSolveSafeTerminationReturnCode.T
 end
 
-function NLSolveSafeTerminationResult(u = nothing; best_objective_value = Inf64,
-        best_objective_value_iteration = 0,
+function NLSolveSafeTerminationResult(
+        u = nothing; best_objective_value = Inf64, best_objective_value_iteration = 0,
         return_code = NLSolveSafeTerminationReturnCode.Failure)
     u = u !== nothing ? copy(u) : u
     Base.depwarn(
         "NLSolveSafeTerminationResult has been deprecated in favor of the new dispatch based termination conditions. Please use the new termination conditions API!",
         :NLSolveSafeTerminationResult)
-    return NLSolveSafeTerminationResult{typeof(best_objective_value), typeof(u)}(u,
-        best_objective_value, best_objective_value_iteration, return_code)
+    return NLSolveSafeTerminationResult{typeof(best_objective_value), typeof(u)}(
+        u, best_objective_value, best_objective_value_iteration, return_code)
 end
 
 const BASIC_TERMINATION_MODES = (NLSolveTerminationMode.SteadyStateDefault,
-    NLSolveTerminationMode.NLSolveDefault,
-    NLSolveTerminationMode.Norm, NLSolveTerminationMode.Rel,
-    NLSolveTerminationMode.RelNorm,
+    NLSolveTerminationMode.NLSolveDefault, NLSolveTerminationMode.Norm,
+    NLSolveTerminationMode.Rel, NLSolveTerminationMode.RelNorm,
     NLSolveTerminationMode.Abs, NLSolveTerminationMode.AbsNorm)
 
-const SAFE_TERMINATION_MODES = (NLSolveTerminationMode.RelSafe,
-    NLSolveTerminationMode.RelSafeBest,
-    NLSolveTerminationMode.AbsSafe,
-    NLSolveTerminationMode.AbsSafeBest)
+const SAFE_TERMINATION_MODES = (
+    NLSolveTerminationMode.RelSafe, NLSolveTerminationMode.RelSafeBest,
+    NLSolveTerminationMode.AbsSafe, NLSolveTerminationMode.AbsSafeBest)
 
-const SAFE_BEST_TERMINATION_MODES = (NLSolveTerminationMode.RelSafeBest,
-    NLSolveTerminationMode.AbsSafeBest)
+const SAFE_BEST_TERMINATION_MODES = (
+    NLSolveTerminationMode.RelSafeBest, NLSolveTerminationMode.AbsSafeBest)
 
 @doc doc"""
     NLSolveTerminationCondition(mode; abstol::T = 1e-8, reltol::T = 1e-6,
@@ -146,8 +144,8 @@ Define the termination criteria for the NonlinearProblem or SteadyStateProblem.
 !!! warning
     This has been deprecated and will be removed in the next major release. Please use the new dispatch based termination conditions API.
 """
-struct NLSolveTerminationCondition{mode, T,
-    S <: Union{<:NLSolveSafeTerminationOptions, Nothing}}
+struct NLSolveTerminationCondition{
+    mode, T, S <: Union{<:NLSolveSafeTerminationOptions, Nothing}}
     abstol::T
     reltol::T
     safe_termination_options::S
@@ -168,8 +166,7 @@ get_termination_mode(::NLSolveTerminationCondition{mode}) where {mode} = mode
 # Don't specify `mode` since the defaults would depend on the package
 function NLSolveTerminationCondition(mode; abstol::T = 1e-8, reltol::T = 1e-6,
         protective_threshold = 1e3, patience_steps::Int = 30,
-        patience_objective_multiplier = 3,
-        min_max_factor = 1.3) where {T}
+        patience_objective_multiplier = 3, min_max_factor = 1.3) where {T}
     Base.depwarn(
         "NLSolveTerminationCondition has been deprecated in favor of the new dispatch based termination conditions. Please use the new termination conditions API!",
         :NLSolveTerminationCondition)
@@ -184,16 +181,14 @@ function NLSolveTerminationCondition(mode; abstol::T = 1e-8, reltol::T = 1e-6,
 end
 
 function (cond::NLSolveTerminationCondition)(storage::Union{
-        NLSolveSafeTerminationResult,
-        Nothing
-})
+        NLSolveSafeTerminationResult, Nothing})
     mode = get_termination_mode(cond)
     # We need both the dispatches to support solvers that don't use the integrator
     # interface like SimpleNonlinearSolve
     if mode in BASIC_TERMINATION_MODES
         function _termination_condition_closure_basic(integrator, abstol, reltol, min_t)
-            return _termination_condition_closure_basic(get_du(integrator), integrator.u,
-                integrator.uprev, abstol, reltol)
+            return _termination_condition_closure_basic(
+                get_du(integrator), integrator.u, integrator.uprev, abstol, reltol)
         end
         function _termination_condition_closure_basic(du, u, uprev, abstol, reltol)
             return _has_converged(du, u, uprev, cond, abstol, reltol)
@@ -204,8 +199,8 @@ function (cond::NLSolveTerminationCondition)(storage::Union{
         nstep::Int = 0
 
         function _termination_condition_closure_safe(integrator, abstol, reltol, min_t)
-            return _termination_condition_closure_safe(get_du(integrator), integrator.u,
-                integrator.uprev, abstol, reltol)
+            return _termination_condition_closure_safe(
+                get_du(integrator), integrator.u, integrator.uprev, abstol, reltol)
         end
         @inbounds function _termination_condition_closure_safe(du, u, uprev, abstol, reltol)
             aType = typeof(abstol)
