@@ -1,31 +1,43 @@
 module SimpleNonlinearSolve
 
-import PrecompileTools: @compile_workload, @setup_workload, @recompile_invalidations
+using PrecompileTools: @compile_workload, @setup_workload
 
-@recompile_invalidations begin
-    using ADTypes, ArrayInterface, ConcreteStructs, DiffEqBase, FastClosures, FiniteDiff,
-          ForwardDiff, Reexport, LinearAlgebra, SciMLBase
+using ADTypes: ADTypes, AbstractADType, AutoFiniteDiff, AutoForwardDiff,
+               AutoPolyesterForwardDiff
+using ArrayInterface: ArrayInterface
+using ConcreteStructs: @concrete
+using DiffEqBase: DiffEqBase
+using DifferentiationInterface: DifferentiationInterface
+using DiffResults: DiffResults
+using FastClosures: @closure
+using FiniteDiff: FiniteDiff
+using ForwardDiff: ForwardDiff, Dual
+using EnumX
+using LinearAlgebra: LinearAlgebra, I, convert, copyto!, diagind, dot, issuccess, lu, mul!,
+                     norm, transpose
+using Markdown
+using MaybeInplace: @bb, setindex_trait, CanSetindex, CannotSetindex
+using Reexport: @reexport
+using SciMLBase: @add_kwonly, SciMLBase, AbstractNonlinearProblem, IntervalNonlinearProblem,
+                 AbstractNonlinearFunction, StandardNonlinearProblem, NonlinearFunction,
+                 NonlinearLeastSquaresProblem, NonlinearProblem, ReturnCode, init, remake,
+                 solve, AbstractNonlinearAlgorithm, build_solution, isinplace, _unwrap_val,
+                 warn_paramtype
+using Setfield: @set!
+using StaticArraysCore: StaticArray, SVector, SMatrix, SArray, MArray, Size
 
-    import DiffEqBase: AbstractNonlinearTerminationMode,
-                       AbstractSafeNonlinearTerminationMode,
-                       AbstractSafeBestNonlinearTerminationMode,
-                       NonlinearSafeTerminationReturnCode, get_termination_mode,
-                       NONLINEARSOLVE_DEFAULT_NORM
-    import DiffResults
-    import ForwardDiff: Dual
-    import MaybeInplace: @bb, setindex_trait, CanSetindex, CannotSetindex
-    import SciMLBase: AbstractNonlinearAlgorithm, build_solution, isinplace, _unwrap_val
-    import StaticArraysCore: StaticArray, SVector, SMatrix, SArray, MArray, MMatrix, Size
-end
+const DI = DifferentiationInterface
 
-@reexport using ADTypes, SciMLBase
+@reexport using SciMLBase
 
 abstract type AbstractSimpleNonlinearSolveAlgorithm <: AbstractNonlinearAlgorithm end
 abstract type AbstractBracketingAlgorithm <: AbstractSimpleNonlinearSolveAlgorithm end
 abstract type AbstractNewtonAlgorithm <: AbstractSimpleNonlinearSolveAlgorithm end
 
 @inline __is_extension_loaded(::Val) = false
-
+include("termination_conditions_deprecated.jl")
+include("termination_conditions.jl")
+include("immutable_nonlinear_problem.jl")
 include("utils.jl")
 include("linesearch.jl")
 
@@ -36,6 +48,7 @@ include("nlsolve/lbroyden.jl")
 include("nlsolve/klement.jl")
 include("nlsolve/trustRegion.jl")
 include("nlsolve/halley.jl")
+include("nlsolve/householder.jl")
 include("nlsolve/dfsane.jl")
 include("nlsolve/muller.jl")
 
@@ -59,21 +72,32 @@ function SciMLBase.solve(prob::IntervalNonlinearProblem, alg::Nothing, args...; 
 end
 
 # By Pass the highlevel checks for NonlinearProblem for Simple Algorithms
+function SciMLBase.solve(prob::NonlinearProblem, alg::AbstractSimpleNonlinearSolveAlgorithm,
+        args...; sensealg = nothing, u0 = nothing, p = nothing, kwargs...)
+    prob = convert(ImmutableNonlinearProblem, prob)
+    if sensealg === nothing && haskey(prob.kwargs, :sensealg)
+        sensealg = prob.kwargs[:sensealg]
+    end
+    new_u0 = u0 !== nothing ? u0 : prob.u0
+    new_p = p !== nothing ? p : prob.p
+    return __internal_solve_up(prob, sensealg, new_u0, u0 === nothing, new_p,
+        p === nothing, alg, args...; prob.kwargs..., kwargs...)
+end
+
 function SciMLBase.solve(
-        prob::NonlinearProblem, alg::AbstractSimpleNonlinearSolveAlgorithm,
+        prob::ImmutableNonlinearProblem, alg::AbstractSimpleNonlinearSolveAlgorithm,
         args...; sensealg = nothing, u0 = nothing, p = nothing, kwargs...)
     if sensealg === nothing && haskey(prob.kwargs, :sensealg)
         sensealg = prob.kwargs[:sensealg]
     end
     new_u0 = u0 !== nothing ? u0 : prob.u0
     new_p = p !== nothing ? p : prob.p
-    return __internal_solve_up(
-        prob, sensealg, new_u0, u0 === nothing, new_p, p === nothing,
-        alg, args...; prob.kwargs..., kwargs...)
+    return __internal_solve_up(prob, sensealg, new_u0, u0 === nothing, new_p,
+        p === nothing, alg, args...; prob.kwargs..., kwargs...)
 end
 
-function __internal_solve_up(_prob::NonlinearProblem, sensealg, u0, u0_changed,
-        p, p_changed, alg, args...; kwargs...)
+function __internal_solve_up(_prob::ImmutableNonlinearProblem, sensealg, u0,
+        u0_changed, p, p_changed, alg, args...; kwargs...)
     prob = u0_changed || p_changed ? remake(_prob; u0, p) : _prob
     return SciMLBase.__solve(prob, alg, args...; kwargs...)
 end
@@ -81,10 +105,10 @@ end
 @setup_workload begin
     for T in (Float32, Float64)
         prob_no_brack_scalar = NonlinearProblem{false}((u, p) -> u .* u .- p, T(0.1), T(2))
-        prob_no_brack_iip = NonlinearProblem{true}((du, u, p) -> du .= u .* u .- p,
-            T.([1.0, 1.0, 1.0]), T(2))
-        prob_no_brack_oop = NonlinearProblem{false}((u, p) -> u .* u .- p,
-            T.([1.0, 1.0, 1.0]), T(2))
+        prob_no_brack_iip = NonlinearProblem{true}(
+            (du, u, p) -> du .= u .* u .- p, T.([1.0, 1.0, 1.0]), T(2))
+        prob_no_brack_oop = NonlinearProblem{false}(
+            (u, p) -> u .* u .- p, T.([1.0, 1.0, 1.0]), T(2))
 
         algs = [SimpleNewtonRaphson(), SimpleBroyden(), SimpleKlement(), SimpleDFSane(),
             SimpleTrustRegion(), SimpleLimitedMemoryBroyden(; threshold = 2)]
@@ -104,8 +128,8 @@ end
             end
         end
 
-        prob_brack = IntervalNonlinearProblem{false}((u, p) -> u * u - p,
-            T.((0.0, 2.0)), T(2))
+        prob_brack = IntervalNonlinearProblem{false}(
+            (u, p) -> u * u - p, T.((0.0, 2.0)), T(2))
         algs = [Bisection(), Falsi(), Ridder(), Brent(), Alefeld(), ITP()]
         @compile_workload begin
             for alg in algs
@@ -115,8 +139,18 @@ end
     end
 end
 
+export AutoFiniteDiff, AutoForwardDiff, AutoPolyesterForwardDiff
 export SimpleBroyden, SimpleDFSane, SimpleGaussNewton, SimpleHalley, SimpleKlement,
        SimpleLimitedMemoryBroyden, SimpleNewtonRaphson, SimpleTrustRegion, SimpleMuller
+export SimpleHouseholder
 export Alefeld, Bisection, Brent, Falsi, ITP, Ridder
+
+export SteadyStateDiffEqTerminationMode, SimpleNonlinearSolveTerminationMode,
+       NormTerminationMode, RelTerminationMode, RelNormTerminationMode, AbsTerminationMode,
+       AbsNormTerminationMode, RelSafeTerminationMode, AbsSafeTerminationMode,
+       RelSafeBestTerminationMode, AbsSafeBestTerminationMode
+# Deprecated API
+export NLSolveTerminationMode, NLSolveSafeTerminationOptions, NLSolveTerminationCondition,
+       NLSolveSafeTerminationResult
 
 end # module

@@ -50,11 +50,11 @@ end
 function SimpleDFSane(; σ_min::Real = 1e-10, σ_max::Real = 1e10, σ_1::Real = 1.0,
         M::Union{Int, Val} = Val(10), γ::Real = 1e-4, τ_min::Real = 0.1, τ_max::Real = 0.5,
         nexp::Int = 2, η_strategy::F = (f_1, k, x, F) -> f_1 ./ k^2) where {F}
-    return SimpleDFSane{_unwrap_val(M)}(σ_min, σ_max, σ_1, γ, τ_min, τ_max, nexp,
-        η_strategy)
+    return SimpleDFSane{_unwrap_val(M)}(
+        σ_min, σ_max, σ_1, γ, τ_min, τ_max, nexp, η_strategy)
 end
 
-function SciMLBase.__solve(prob::NonlinearProblem, alg::SimpleDFSane{M}, args...;
+function SciMLBase.__solve(prob::ImmutableNonlinearProblem, alg::SimpleDFSane{M}, args...;
         abstol = nothing, reltol = nothing, maxiters = 1000, alias_u0 = false,
         termination_condition = nothing, kwargs...) where {M}
     x = __maybe_unaliased(prob.u0, alias_u0)
@@ -70,19 +70,15 @@ function SciMLBase.__solve(prob::NonlinearProblem, alg::SimpleDFSane{M}, args...
     τ_min = T(alg.τ_min)
     τ_max = T(alg.τ_max)
 
-    abstol, reltol, tc_cache = init_termination_cache(prob, abstol, reltol, fx, x,
-        termination_condition)
+    abstol, reltol, tc_cache = init_termination_cache(
+        prob, abstol, reltol, fx, x, termination_condition)
 
     fx_norm = NONLINEARSOLVE_DEFAULT_NORM(fx)^nexp
     α_1 = one(T)
     f_1 = fx_norm
 
-    history_f_k = if x isa SArray ||
-                     (x isa Number && __is_extension_loaded(Val(:StaticArrays)))
-        ones(SVector{M, T}) * fx_norm
-    else
-        fill(fx_norm, M)
-    end
+    history_f_k = x isa SArray ? ones(SVector{M, T}) * fx_norm :
+                  __history_vec(fx_norm, Val(M))
 
     # Generate the cache
     @bb x_cache = similar(x)
@@ -150,6 +146,8 @@ function SciMLBase.__solve(prob::NonlinearProblem, alg::SimpleDFSane{M}, args...
         # Store function value
         if history_f_k isa SVector
             history_f_k = Base.setindex(history_f_k, fx_norm_new, mod1(k, M))
+        elseif history_f_k isa NTuple
+            @set! history_f_k[mod1(k, M)] = fx_norm_new
         else
             history_f_k[mod1(k, M)] = fx_norm_new
         end
@@ -157,4 +155,9 @@ function SciMLBase.__solve(prob::NonlinearProblem, alg::SimpleDFSane{M}, args...
     end
 
     return build_solution(prob, alg, x, fx; retcode = ReturnCode.MaxIters)
+end
+
+@inline @generated function __history_vec(fx_norm, ::Val{M}) where {M}
+    M ≥ 11 && return :(fill(fx_norm, M)) # Julia can't specialize here
+    return :(ntuple(Returns(fx_norm), $(M)))
 end

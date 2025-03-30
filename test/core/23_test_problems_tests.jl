@@ -1,11 +1,12 @@
 @testsetup module RobustnessTesting
 using LinearAlgebra, NonlinearProblemLibrary, DiffEqBase, Test
+using SimpleNonlinearSolve
 
 problems = NonlinearProblemLibrary.problems
 dicts = NonlinearProblemLibrary.dicts
 
-function test_on_library(problems, dicts, alg_ops, broken_tests, ϵ = 1e-4;
-        skip_tests = nothing)
+function test_on_library(
+        problems, dicts, alg_ops, broken_tests, ϵ = 1e-4; skip_tests = nothing)
     for (idx, (problem, dict)) in enumerate(zip(problems, dicts))
         x = dict["start"]
         res = similar(x)
@@ -13,8 +14,8 @@ function test_on_library(problems, dicts, alg_ops, broken_tests, ϵ = 1e-4;
         @testset "$idx: $(dict["title"])" begin
             for alg in alg_ops
                 try
-                    sol = solve(nlprob, alg;
-                        termination_condition = AbsNormTerminationMode())
+                    sol = solve(
+                        nlprob, alg; termination_condition = AbsNormTerminationMode())
                     problem(res, sol.u, nothing)
 
                     skip = skip_tests !== nothing && idx in skip_tests[alg]
@@ -41,7 +42,7 @@ end
 export problems, dicts, test_on_library
 end
 
-@testitem "SimpleNewtonRaphson" setup=[RobustnessTesting] begin
+@testitem "23 Test Problems: SimpleNewtonRaphson" setup=[RobustnessTesting] tags=[:core] begin
     alg_ops = (SimpleNewtonRaphson(),)
 
     broken_tests = Dict(alg => Int[] for alg in alg_ops)
@@ -50,9 +51,21 @@ end
     test_on_library(problems, dicts, alg_ops, broken_tests)
 end
 
-@testitem "SimpleTrustRegion" setup=[RobustnessTesting] begin
-    alg_ops = (SimpleTrustRegion(),
-        SimpleTrustRegion(; nlsolve_update_rule = Val(true)))
+@testitem "23 Test Problems: SimpleHalley" setup=[RobustnessTesting] tags=[:core] begin
+    alg_ops = (SimpleHalley(),)
+
+    broken_tests = Dict(alg => Int[] for alg in alg_ops)
+    if Sys.isapple()
+        broken_tests[alg_ops[1]] = [1, 5, 11, 15, 16, 18]
+    else
+        broken_tests[alg_ops[1]] = [1, 5, 15, 16, 18]
+    end
+
+    test_on_library(problems, dicts, alg_ops, broken_tests)
+end
+
+@testitem "23 Test Problems: SimpleTrustRegion" setup=[RobustnessTesting] tags=[:core] begin
+    alg_ops = (SimpleTrustRegion(), SimpleTrustRegion(; nlsolve_update_rule = Val(true)))
 
     broken_tests = Dict(alg => Int[] for alg in alg_ops)
     broken_tests[alg_ops[1]] = [3, 15, 16, 21]
@@ -61,16 +74,20 @@ end
     test_on_library(problems, dicts, alg_ops, broken_tests)
 end
 
-@testitem "SimpleDFSane" setup=[RobustnessTesting] begin
+@testitem "23 Test Problems: SimpleDFSane" setup=[RobustnessTesting] tags=[:core] begin
     alg_ops = (SimpleDFSane(),)
 
     broken_tests = Dict(alg => Int[] for alg in alg_ops)
-    broken_tests[alg_ops[1]] = [1, 2, 3, 4, 5, 6, 11, 21]
+    if Sys.isapple()
+        broken_tests[alg_ops[1]] = [1, 2, 3, 5, 6, 21]
+    else
+        broken_tests[alg_ops[1]] = [1, 2, 3, 4, 5, 6, 11, 21]
+    end
 
     test_on_library(problems, dicts, alg_ops, broken_tests)
 end
 
-@testitem "SimpleBroyden" retries=5 setup=[RobustnessTesting] begin
+@testitem "23 Test Problems: SimpleBroyden" setup=[RobustnessTesting] tags=[:core] begin
     alg_ops = (SimpleBroyden(),)
 
     broken_tests = Dict(alg => Int[] for alg in alg_ops)
@@ -79,7 +96,7 @@ end
     test_on_library(problems, dicts, alg_ops, broken_tests)
 end
 
-@testitem "SimpleKlement" setup=[RobustnessTesting] begin
+@testitem "23 Test Problems: SimpleKlement" setup=[RobustnessTesting] tags=[:core] begin
     alg_ops = (SimpleKlement(),)
 
     broken_tests = Dict(alg => Int[] for alg in alg_ops)

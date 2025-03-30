@@ -12,8 +12,9 @@ A low-overhead implementation of Halley's Method.
 
 ### Keyword Arguments
 
-  - `autodiff`: determines the backend used for the Hessian. Defaults to `nothing`. Valid
-    choices are `AutoForwardDiff()` or `AutoFiniteDiff()`.
+  - `autodiff`: determines the backend used for the Hessian. Defaults to `nothing` (i.e.
+    automatic backend selection). Valid choices include backends from
+    `DifferentiationInterface.jl`.
 
 !!! warning
 
@@ -23,26 +24,24 @@ A low-overhead implementation of Halley's Method.
     autodiff = nothing
 end
 
-function SciMLBase.__solve(prob::NonlinearProblem, alg::SimpleHalley, args...;
-        abstol = nothing, reltol = nothing, maxiters = 1000, alias_u0 = false,
-        termination_condition = nothing, kwargs...)
-    isinplace(prob) &&
-        error("SimpleHalley currently only supports out-of-place nonlinear problems")
-
+function SciMLBase.__solve(prob::ImmutableNonlinearProblem, alg::SimpleHalley, args...;
+        abstol = nothing, reltol = nothing, maxiters = 1000,
+        alias_u0 = false, termination_condition = nothing, kwargs...)
     x = __maybe_unaliased(prob.u0, alias_u0)
     fx = _get_fx(prob, x)
     T = eltype(x)
 
+    f = __fixed_parameter_function(prob)
     autodiff = __get_concrete_autodiff(prob, alg.autodiff)
-    abstol, reltol, tc_cache = init_termination_cache(prob, abstol, reltol, fx, x,
-        termination_condition)
+    abstol, reltol, tc_cache = init_termination_cache(
+        prob, abstol, reltol, fx, x, termination_condition)
 
     @bb xo = copy(x)
 
     if setindex_trait(x) === CanSetindex()
-        A = similar(x, length(x), length(x))
-        Aaᵢ = similar(x, length(x))
-        cᵢ = similar(x)
+        A = __similar(x, length(x), length(x))
+        Aaᵢ = __similar(x, length(x))
+        cᵢ = __similar(x)
     else
         A = x
         Aaᵢ = x
@@ -51,7 +50,7 @@ function SciMLBase.__solve(prob::NonlinearProblem, alg::SimpleHalley, args...;
 
     for i in 1:maxiters
         # Hessian Computation is unfortunately type unstable
-        fx, dfx, d2fx = compute_jacobian_and_hessian(autodiff, prob, fx, x)
+        fx, dfx, d2fx = compute_jacobian_and_hessian(autodiff, prob, f, fx, x)
         setindex_trait(x) === CannotSetindex() && (A = dfx)
 
         # Factorize Once and Reuse
@@ -59,8 +58,8 @@ function SciMLBase.__solve(prob::NonlinearProblem, alg::SimpleHalley, args...;
             dfx
         else
             fact = lu(dfx; check = false)
-            !issuccess(fact) && return build_solution(prob, alg, x, fx;
-                retcode = ReturnCode.Unstable)
+            !issuccess(fact) &&
+                return build_solution(prob, alg, x, fx; retcode = ReturnCode.Unstable)
             fact
         end
 
@@ -78,9 +77,8 @@ function SciMLBase.__solve(prob::NonlinearProblem, alg::SimpleHalley, args...;
         cᵢ = _restructure(cᵢ, cᵢ_)
 
         if i == 1
-            if iszero(fx)
+            iszero(fx) &&
                 return build_solution(prob, alg, x, fx; retcode = ReturnCode.Success)
-            end
         else
             # Termination Checks
             tc_sol = check_termination(tc_cache, fx, x, xo, prob, alg)
