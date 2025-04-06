@@ -72,7 +72,7 @@ StaticArraysCore = "1.4.2"
 TaylorDiff = "0.2.5"
 Test = "1.10"
 Tracker = "0.2.33"
-Zygote = "0.6.69"
+Zygote = "0.6.69, 0.7"
 julia = "1.10"
 
 [extras]
