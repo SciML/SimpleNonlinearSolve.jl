@@ -13,8 +13,8 @@ function SciMLBase.__solve(prob::ImmutableNonlinearProblem, alg::SimpleKlement, 
     T = eltype(x)
     fx = _get_fx(prob, x)
 
-    abstol, reltol, tc_cache = init_termination_cache(
-        prob, abstol, reltol, fx, x, termination_condition)
+    abstol, reltol,
+    tc_cache = init_termination_cache(prob, abstol, reltol, fx, x, termination_condition)
 
     @bb δx = copy(x)
     @bb fprev = copy(fx)

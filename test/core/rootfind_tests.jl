@@ -40,12 +40,13 @@ end
 @testitem "First Order Methods" setup=[RootfindingTesting] tags=[:core] begin
     @testset "$(alg)" for alg in (SimpleNewtonRaphson,
         SimpleTrustRegion,
-        (args...; kwargs...) -> SimpleTrustRegion(
+        (args...;
+            kwargs...) -> SimpleTrustRegion(
             args...; nlsolve_update_rule = Val(true), kwargs...))
         @testset "AutoDiff: $(nameof(typeof(autodiff)))" for autodiff in (
             AutoFiniteDiff(), AutoForwardDiff(), AutoPolyesterForwardDiff())
-            @testset "[OOP] u0: $(typeof(u0))" for u0 in (
-                [1.0, 1.0], @SVector[1.0, 1.0], 1.0)
+            @testset "[OOP] u0: $(typeof(u0))" for u0 in
+                                                   ([1.0, 1.0], @SVector[1.0, 1.0], 1.0)
                 u0 isa SVector && autodiff isa AutoPolyesterForwardDiff && continue
                 sol = benchmark_nlsolve_oop(quadratic_f, u0; solver = alg(; autodiff))
                 @test SciMLBase.successful_retcode(sol)
@@ -59,7 +60,8 @@ end
             end
         end
 
-        @testset "Termination condition: $(nameof(typeof(termination_condition))) u0: $(nameof(typeof(u0)))" for termination_condition in TERMINATION_CONDITIONS,
+        @testset "Termination condition: $(nameof(typeof(termination_condition))) u0: $(nameof(typeof(u0)))" for termination_condition in
+                                                                                                                 TERMINATION_CONDITIONS,
             u0 in (1.0, [1.0, 1.0], @SVector[1.0, 1.0])
 
             probN = NonlinearProblem(quadratic_f, u0, 2.0)
@@ -71,8 +73,8 @@ end
 @testitem "SimpleHalley" setup=[RootfindingTesting] tags=[:core] begin
     @testset "AutoDiff: $(nameof(typeof(autodiff)))" for autodiff in (
         AutoFiniteDiff(), AutoForwardDiff())
-        @testset "[OOP] u0: $(nameof(typeof(u0)))" for u0 in (
-            [1.0, 1.0], @SVector[1.0, 1.0], 1.0)
+        @testset "[OOP] u0: $(nameof(typeof(u0)))" for u0 in
+                                                       ([1.0, 1.0], @SVector[1.0, 1.0], 1.0)
             sol = benchmark_nlsolve_oop(quadratic_f, u0; solver = SimpleHalley(; autodiff))
             @test SciMLBase.successful_retcode(sol)
             @test all(abs.(sol.u .* sol.u .- 2) .< 1e-9)
@@ -85,7 +87,8 @@ end
         end
     end
 
-    @testset "Termination condition: $(nameof(typeof(termination_condition))) u0: $(nameof(typeof(u0)))" for termination_condition in TERMINATION_CONDITIONS,
+    @testset "Termination condition: $(nameof(typeof(termination_condition))) u0: $(nameof(typeof(u0)))" for termination_condition in
+                                                                                                             TERMINATION_CONDITIONS,
         u0 in (1.0, [1.0, 1.0], @SVector[1.0, 1.0])
 
         probN = NonlinearProblem(quadratic_f, u0, 2.0)
@@ -110,7 +113,8 @@ end
         end
     end
 
-    @testset "Termination condition: $(nameof(typeof(termination_condition))) u0: $(nameof(typeof(u0)))" for termination_condition in TERMINATION_CONDITIONS,
+    @testset "Termination condition: $(nameof(typeof(termination_condition))) u0: $(nameof(typeof(u0)))" for termination_condition in
+                                                                                                             TERMINATION_CONDITIONS,
         u0 in (1.0, [1.0], @SVector[1.0])
 
         probN = NonlinearProblem(quadratic_f, u0, 2.0)
@@ -120,8 +124,8 @@ end
 end
 
 @testitem "Derivative Free Metods" setup=[RootfindingTesting] tags=[:core] begin
-    @testset "$(nameof(typeof(alg)))" for alg in [
-        SimpleBroyden(), SimpleKlement(), SimpleDFSane(),
+    @testset "$(nameof(typeof(alg)))" for alg in
+                                          [SimpleBroyden(), SimpleKlement(), SimpleDFSane(),
         SimpleLimitedMemoryBroyden(), SimpleBroyden(; linesearch = Val(true)),
         SimpleLimitedMemoryBroyden(; linesearch = Val(true))]
         @testset "[OOP] u0: $(typeof(u0))" for u0 in ([1.0, 1.0], @SVector[1.0, 1.0], 1.0)
@@ -136,7 +140,8 @@ end
             @test all(abs.(sol.u .* sol.u .- 2) .< 1e-9)
         end
 
-        @testset "Termination condition: $(nameof(typeof(termination_condition))) u0: $(nameof(typeof(u0)))" for termination_condition in TERMINATION_CONDITIONS,
+        @testset "Termination condition: $(nameof(typeof(termination_condition))) u0: $(nameof(typeof(u0)))" for termination_condition in
+                                                                                                                 TERMINATION_CONDITIONS,
             u0 in (1.0, [1.0, 1.0], @SVector[1.0, 1.0])
 
             probN = NonlinearProblem(quadratic_f, u0, 2.0)
@@ -146,8 +151,8 @@ end
 end
 
 @testitem "Newton Fails" setup=[RootfindingTesting] tags=[:core] begin
-    u0 = [-10.0, -1.0, 1.0, 2.0, 3.0, 4.0, 10.0]
-    p = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    u0=[-10.0, -1.0, 1.0, 2.0, 3.0, 4.0, 10.0]
+    p=[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
     @testset "$(nameof(typeof(alg)))" for alg in (
         SimpleDFSane(), SimpleTrustRegion(), SimpleHalley(),
@@ -159,8 +164,8 @@ end
 end
 
 @testitem "Kwargs Propagation" setup=[RootfindingTesting] tags=[:core] begin
-    prob = NonlinearProblem(quadratic_f, ones(4), 2.0; maxiters = 2)
-    sol = solve(prob, SimpleNewtonRaphson())
+    prob=NonlinearProblem(quadratic_f, ones(4), 2.0; maxiters = 2)
+    sol=solve(prob, SimpleNewtonRaphson())
     @test sol.retcode === ReturnCode.MaxIters
 end
 
@@ -210,7 +215,7 @@ end
 
         for p in 1.1:0.1:100.0
             @test g(p)≈sqrt(p) atol=1e-3 rtol=1e-3
-            @test ForwardDiff.derivative(g, p)≈1 / (2 * sqrt(p)) atol=1e-3 rtol=1e-3
+            @test ForwardDiff.derivative(g, p)≈1/(2*sqrt(p)) atol=1e-3 rtol=1e-3
         end
 
         t = (p) -> [sqrt(p[2] / p[1])]
@@ -222,7 +227,7 @@ end
             return [sol.u]
         end
 
-        @test g2(p)≈[sqrt(p[2] / p[1])] atol=1e-3 rtol=1e-3
+        @test g2(p)≈[sqrt(p[2]/p[1])] atol=1e-3 rtol=1e-3
         @test ForwardDiff.jacobian(g2, p)≈ForwardDiff.jacobian(t, p) atol=1e-3 rtol=1e-3
 
         probB = IntervalNonlinearProblem{false}(quadratic_f, (1.0, 2.0), 2.0)

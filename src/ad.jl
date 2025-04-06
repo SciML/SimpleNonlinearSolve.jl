@@ -90,14 +90,16 @@ function __nlsolve_ad(prob::NonlinearLeastSquaresProblem, alg, args...; kwargs..
                 return nothing
             end
         else
-            _F = @closure (u, p) -> begin
+            _F = @closure (
+                u, p) -> begin
                 resid = prob.f(u, p)
                 return reshape(2 .* prob.f.vjp(resid, u, p), size(u))
             end
         end
     elseif SciMLBase.has_jac(prob.f)
         if isinplace(prob)
-            _F = @closure (du, u, p) -> begin
+            _F = @closure (
+                du, u, p) -> begin
                 J = __similar(du, length(sol.resid), length(u))
                 prob.f.jac(J, u, p)
                 resid = __similar(du, length(sol.resid))
@@ -106,13 +108,15 @@ function __nlsolve_ad(prob::NonlinearLeastSquaresProblem, alg, args...; kwargs..
                 return nothing
             end
         else
-            _F = @closure (u, p) -> begin
+            _F = @closure (u,
+                p) -> begin
                 return reshape(2 .* vec(prob.f(u, p))' * prob.f.jac(u, p), size(u))
             end
         end
     else
         if isinplace(prob)
-            _F = @closure (du, u, p) -> begin
+            _F = @closure (du, u,
+                p) -> begin
                 _f = @closure (du, u) -> prob.f(du, u, p)
                 resid = __similar(du, length(sol.resid))
                 v, J = DI.value_and_jacobian(_f, resid, AutoForwardDiff(), u)
@@ -128,7 +132,8 @@ function __nlsolve_ad(prob::NonlinearLeastSquaresProblem, alg, args...; kwargs..
                     return __zygote_compute_nlls_vjp(_f, u, p)
                 end
             else
-                _F = @closure (u, p) -> begin
+                _F = @closure (
+                    u, p) -> begin
                     _f = Base.Fix2(prob.f, p)
                     v, J = DI.value_and_jacobian(_f, AutoForwardDiff(), u)
                     return reshape(2 .* vec(v)' * J, size(u))

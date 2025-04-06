@@ -72,8 +72,10 @@ function SciMLBase.solve(prob::IntervalNonlinearProblem, alg::Bisection,
         end
     end
 
-    sol, i, left, right, fl, fr = __bisection(
-        left, right, fl, fr, f; abstol, maxiters = maxiters - i, prob, alg)
+    sol, i,
+    left,
+    right,
+    fl, fr = __bisection(left, right, fl, fr, f; abstol, maxiters = maxiters - i, prob, alg)
 
     sol !== nothing && return sol
 
