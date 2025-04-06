@@ -52,7 +52,8 @@ for pType in (ImmutableNonlinearProblem, NonlinearLeastSquaresProblem)
         ReverseDiff.@grad function __internal_solve_up(
                 prob::$(pType), sensealg, u0, u0_changed,
                 p, p_changed, alg, args...; kwargs...)
-            out, ∇internal = DiffEqBase._solve_adjoint(
+            out,
+            ∇internal = DiffEqBase._solve_adjoint(
                 prob, sensealg, ReverseDiff.value(u0), ReverseDiff.value(p),
                 ReverseDiffOriginator(), alg, args...; kwargs...)
             function ∇__internal_solve_up(_args...)

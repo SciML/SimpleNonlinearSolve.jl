@@ -41,8 +41,8 @@ export test_f, test_f!, jacobian_f, solve_with, __compatible
 end
 
 @testitem "ForwardDiff.jl Integration: Rootfinding" setup=[ForwardADRootfindingTesting] tags=[:core] begin
-    @testset "$(nameof(typeof(alg)))" for alg in (
-        SimpleNewtonRaphson(), SimpleTrustRegion(),
+    @testset "$(nameof(typeof(alg)))" for alg in
+                                          (SimpleNewtonRaphson(), SimpleTrustRegion(),
         SimpleTrustRegion(; nlsolve_update_rule = Val(true)),
         SimpleHalley(), SimpleBroyden(), SimpleKlement(), SimpleDFSane())
         us = (2.0, @SVector[1.0, 1.0], [1.0, 1.0], ones(2, 2), @SArray ones(2, 2))
@@ -135,8 +135,8 @@ export loss_function, loss_function!, loss_function_jac, loss_function_vjp,
 end
 
 @testitem "ForwardDiff.jl Integration: NLLS" setup=[ForwardADNLLSTesting] tags=[:core] begin
-    @testset "$(nameof(typeof(alg)))" for alg in (
-        SimpleNewtonRaphson(), SimpleGaussNewton(),
+    @testset "$(nameof(typeof(alg)))" for alg in
+                                          (SimpleNewtonRaphson(), SimpleGaussNewton(),
         SimpleNewtonRaphson(AutoFiniteDiff()), SimpleGaussNewton(AutoFiniteDiff()))
         function obj_1(p)
             prob_oop = NonlinearLeastSquaresProblem{false}(loss_function, θ_init, p)

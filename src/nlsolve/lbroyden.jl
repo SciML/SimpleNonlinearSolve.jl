@@ -63,8 +63,8 @@ end
 
     U, Vᵀ = __init_low_rank_jacobian(x, fx, x isa StaticArray ? threshold : Val(η))
 
-    abstol, reltol, tc_cache = init_termination_cache(
-        prob, abstol, reltol, fx, x, termination_condition)
+    abstol, reltol,
+    tc_cache = init_termination_cache(prob, abstol, reltol, fx, x, termination_condition)
 
     @bb xo = copy(x)
     @bb δx = copy(fx)
@@ -140,7 +140,8 @@ function __static_solve(
         init_α = inv(alg.alpha)
     end
 
-    converged, res = __unrolled_lbroyden_initial_iterations(
+    converged,
+    res = __unrolled_lbroyden_initial_iterations(
         prob, xo, fo, δx, abstol, U, Vᵀ, threshold, ls_cache, init_α)
 
     converged &&

@@ -245,8 +245,7 @@ function (cond::NLSolveTerminationCondition)(storage::Union{
             if objective ≤ typeof(criteria)(patience_objective_multiplier) * criteria
                 if nstep ≥ cond.safe_termination_options.patience_steps
                     last_k_values = objective_values[max(1,
-                        length(objective_values) -
-                        cond.safe_termination_options.patience_steps):end]
+                        length(objective_values) - cond.safe_termination_options.patience_steps):end]
                     if maximum(last_k_values) <
                        typeof(criteria)(cond.safe_termination_options.min_max_factor) *
                        minimum(last_k_values)

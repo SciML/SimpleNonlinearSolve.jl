@@ -38,8 +38,8 @@ function SciMLBase.__solve(prob::ImmutableNonlinearProblem, alg::SimpleHousehold
     @bb xo = copy(x)
     f = __fixed_parameter_function(prob)
 
-    abstol, reltol, tc_cache = init_termination_cache(
-        prob, abstol, reltol, fx, x, termination_condition)
+    abstol, reltol,
+    tc_cache = init_termination_cache(prob, abstol, reltol, fx, x, termination_condition)
 
     for i in 1:maxiters
         num, den, fx = __get_higher_order_derivatives(alg, prob, f, x, fx)

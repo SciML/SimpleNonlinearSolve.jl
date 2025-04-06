@@ -34,8 +34,8 @@ function SciMLBase.__solve(
     f = __fixed_parameter_function(prob)
     J, jac_cache = jacobian_cache(autodiff, prob, f, fx, x)
 
-    abstol, reltol, tc_cache = init_termination_cache(
-        prob, abstol, reltol, fx, x, termination_condition)
+    abstol, reltol,
+    tc_cache = init_termination_cache(prob, abstol, reltol, fx, x, termination_condition)
 
     for i in 1:maxiters
         fx, dfx = value_and_jacobian(autodiff, prob, f, fx, x, jac_cache; J)

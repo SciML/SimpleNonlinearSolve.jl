@@ -43,64 +43,64 @@ export problems, dicts, test_on_library
 end
 
 @testitem "23 Test Problems: SimpleNewtonRaphson" setup=[RobustnessTesting] tags=[:core] begin
-    alg_ops = (SimpleNewtonRaphson(),)
+    alg_ops=(SimpleNewtonRaphson(),)
 
-    broken_tests = Dict(alg => Int[] for alg in alg_ops)
-    broken_tests[alg_ops[1]] = []
+    broken_tests=Dict(alg=>Int[] for alg in alg_ops)
+    broken_tests[alg_ops[1]]=[]
 
     test_on_library(problems, dicts, alg_ops, broken_tests)
 end
 
 @testitem "23 Test Problems: SimpleHalley" setup=[RobustnessTesting] tags=[:core] begin
-    alg_ops = (SimpleHalley(),)
+    alg_ops=(SimpleHalley(),)
 
-    broken_tests = Dict(alg => Int[] for alg in alg_ops)
+    broken_tests=Dict(alg=>Int[] for alg in alg_ops)
     if Sys.isapple()
-        broken_tests[alg_ops[1]] = [1, 5, 11, 15, 16, 18]
+        broken_tests[alg_ops[1]]=[1, 5, 11, 15, 16, 18]
     else
-        broken_tests[alg_ops[1]] = [1, 5, 15, 16, 18]
+        broken_tests[alg_ops[1]]=[1, 5, 15, 16, 18]
     end
 
     test_on_library(problems, dicts, alg_ops, broken_tests)
 end
 
 @testitem "23 Test Problems: SimpleTrustRegion" setup=[RobustnessTesting] tags=[:core] begin
-    alg_ops = (SimpleTrustRegion(), SimpleTrustRegion(; nlsolve_update_rule = Val(true)))
+    alg_ops=(SimpleTrustRegion(), SimpleTrustRegion(; nlsolve_update_rule = Val(true)))
 
-    broken_tests = Dict(alg => Int[] for alg in alg_ops)
-    broken_tests[alg_ops[1]] = [3, 15, 16, 21]
-    broken_tests[alg_ops[2]] = [15, 16]
+    broken_tests=Dict(alg=>Int[] for alg in alg_ops)
+    broken_tests[alg_ops[1]]=[3, 15, 16, 21]
+    broken_tests[alg_ops[2]]=[15, 16]
 
     test_on_library(problems, dicts, alg_ops, broken_tests)
 end
 
 @testitem "23 Test Problems: SimpleDFSane" setup=[RobustnessTesting] tags=[:core] begin
-    alg_ops = (SimpleDFSane(),)
+    alg_ops=(SimpleDFSane(),)
 
-    broken_tests = Dict(alg => Int[] for alg in alg_ops)
+    broken_tests=Dict(alg=>Int[] for alg in alg_ops)
     if Sys.isapple()
-        broken_tests[alg_ops[1]] = [1, 2, 3, 5, 6, 21]
+        broken_tests[alg_ops[1]]=[1, 2, 3, 5, 6, 21]
     else
-        broken_tests[alg_ops[1]] = [1, 2, 3, 4, 5, 6, 11, 21]
+        broken_tests[alg_ops[1]]=[1, 2, 3, 4, 5, 6, 11, 21]
     end
 
     test_on_library(problems, dicts, alg_ops, broken_tests)
 end
 
 @testitem "23 Test Problems: SimpleBroyden" setup=[RobustnessTesting] tags=[:core] begin
-    alg_ops = (SimpleBroyden(),)
+    alg_ops=(SimpleBroyden(),)
 
-    broken_tests = Dict(alg => Int[] for alg in alg_ops)
-    broken_tests[alg_ops[1]] = [1, 5, 11]
+    broken_tests=Dict(alg=>Int[] for alg in alg_ops)
+    broken_tests[alg_ops[1]]=[1, 5, 11]
 
     test_on_library(problems, dicts, alg_ops, broken_tests)
 end
 
 @testitem "23 Test Problems: SimpleKlement" setup=[RobustnessTesting] tags=[:core] begin
-    alg_ops = (SimpleKlement(),)
+    alg_ops=(SimpleKlement(),)
 
-    broken_tests = Dict(alg => Int[] for alg in alg_ops)
-    broken_tests[alg_ops[1]] = [1, 2, 4, 5, 11, 12, 22]
+    broken_tests=Dict(alg=>Int[] for alg in alg_ops)
+    broken_tests[alg_ops[1]]=[1, 2, 4, 5, 11, 12, 22]
 
     test_on_library(problems, dicts, alg_ops, broken_tests)
 end
