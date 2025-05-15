@@ -1,7 +1,7 @@
 name = "SimpleNonlinearSolve"
 uuid = "727e6d20-b764-4bd8-a329-72de5adea6c7"
 authors = ["SciML"]
-version = "1.12.4"
+version = "1.12.5"
 
 [deps]
 ADTypes = "47edcb42-4c32-4615-8424-f2b9edc5f35b"
@@ -55,7 +55,7 @@ ForwardDiff = "0.10.36"
 Hwloc = "3"
 InteractiveUtils = "<0.0.1, 1"
 LinearAlgebra = "1.10"
-Markdown = "1.11.0"
+Markdown = "1.10.0"
 MaybeInplace = "0.1.3"
 NonlinearProblemLibrary = "0.1.2"
 Pkg = "1.10"
